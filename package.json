@@ -19,6 +19,7 @@
   "dependencies": {
     "bluebird": "^3.5.0",
     "events": "^1.1.1",
+    "lodash": "^4.17.4",
     "shortid": "^2.2.8",
     "ws": "^2.2.2"
   }
