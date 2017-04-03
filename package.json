@@ -2,7 +2,7 @@
   "name": "twitch_pubsub",
   "version": "0.0.0",
   "description": "Library to easily interact with Twitch PubSub System",
-  "main": "index.js",
+  "main": "main.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -15,5 +15,11 @@
   "bugs": {
     "url": "https://github.com/jctrvlr/twitch_pubsub/issues"
   },
-  "homepage": "https://github.com/jctrvlr/twitch_pubsub#readme"
+  "homepage": "https://github.com/jctrvlr/twitch_pubsub#readme",
+  "dependencies": {
+    "bluebird": "^3.5.0",
+    "events": "^1.1.1",
+    "shortid": "^2.2.8",
+    "ws": "^2.2.2"
+  }
 }
