@@ -59,7 +59,7 @@ class TwitchPubsub extends EventEmitter {
         } else {
           if(this._pending[message.nonce]) {
             if (message.error !== ""){
-               this._pending[message.nonce].reject(message.error); // TODO IN ADDTOPICS MAKE RESOLVE CALLBACK add to _topics
+               this._pending[message.nonce].reject(message.error); // TODO IN ADDTOPICS MAKE REJECT CALLBACK remove from _topics
             } else {
               this._pending[message.nonce].resolve(); // TODO IN ADDTOPICS MAKE RESOLVE CALLBACK add to _topics
               delete this._pending[message.nonce];
@@ -135,10 +135,25 @@ class TwitchPubsub extends EventEmitter {
 
   /**
    * Handles Bits Message
-   *
+   * TODO WRITE COMMENT HEADER/DOCUMENTATION
    *
    */
   _onBits(message){
+    this.emit('bits', {
+      "badge_entitlement" : message.data.message.badge_entitlement,
+      "bits_used" : message.data.message.bits_used,
+      "channel_id" : message.data.message.channel_id,
+      "channel_name" : message.data.message.channel_name,
+      "chat_message" : message.data.message.chat_message,
+      "context" : message.data.message.context,
+      "message_id" : message.data.message.message_id,
+      "message_type" : message.data.message.message_type,
+      "time" : message.data.message.time,
+      "total_bits_used" : message.data.message.total_bits_used,
+      "user_id" : message.data.message.user_id,
+      "user_name" : message.data.message.user_name,
+      "version" : message.data.message.version
+    });
 
   }
 
