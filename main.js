@@ -27,6 +27,9 @@ class TwitchPubsub extends EventEmitter {
     this._topics = {};
     this._pending = {};
 
+    this._interval = null;
+    this._timeout = null;
+
     this._tries = 0;
     this._init_nonce = null;
 
@@ -76,8 +79,29 @@ class TwitchPubsub extends EventEmitter {
             this._onVideoPlayback(message);
             break;
         }
-      }
+      } else if (message.type === 'RECONNECT') {
+        this._reconnect();
+      } else if (message.type === 'PONG') {
+        clearTimeout(this._timeout);
+        this._timeout = null;
+      } else if
     });
+
+    this._ws.on('close', function inc() {
+      if(this._recon) {
+        this._reconnect();
+      }
+
+      // TODO CLEAR INTERVAL/TIMEOUT HERE
+    });
+
+
+    this._interval = setInterval(() => {
+      if(this._ws.readystate === WebSocket.OPEN) {
+        this._ws.send(JSON.stringify({type: 'PING'}));
+        this._timeout = setTimeout(() => this._reconnect(), 15000);
+      }
+    }, 30000);
 
     // TODO write connection logic
     // ---- PingInterval/Timeout
@@ -96,6 +120,14 @@ class TwitchPubsub extends EventEmitter {
   }
 
   _reconnect(){
+    this._ws.terminate();
+    if(this._debug) {
+      var d = new Date();
+      console.log(d.toLocaleString(), ' -- in _reconnect() -- websocket has been terminated');
+    }
+    setTimeout(function () {
+      this._connect();
+    }, 5000);
     // TODO write reconnection logic
   }
 
@@ -130,14 +162,26 @@ class TwitchPubsub extends EventEmitter {
 
   /**
    * Handles error
-   * @param {string} origin - Name of what callback function error originates frmo
+   * @param {string} origin - Name of what callback function error originates from
    * @param {string} error - Error message to emit
    */
   _handleError(origin, error){
-    
+    let err_mess = 'Error found ' , origin , ' - ' , error;
+    this.emit('error', err_mess);
 
   }
 
+  /**
+   * Debug
+   * @param {string} origin - Name of what callback function error originates from
+   * @param {string} mess - Status message to emit
+   */
+  _debug(origin, mess){
+    if(this._debug) {
+      var d = new Date();
+      console.log(d.toLocaleString(), ' -- in ', origin, ' -- ', mess);
+    }
+  }
 
 
   /**
