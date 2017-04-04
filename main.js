@@ -60,7 +60,7 @@ class Pubsub extends EventEmitter {
         } else {
           if(self._pending[message.nonce]) {
             if (message.error !== ""){
-               self._pending[message.nonce].reject(message.error);
+              self._pending[message.nonce].reject(message.error);
             } else {
               self._pending[message.nonce].resolve();
             }
@@ -270,7 +270,7 @@ class Pubsub extends EventEmitter {
   addTopic(topics, init = false){
     var self = this;
     return new Promise((resolve, reject) => {
-      if()
+
       for(var i = 0; i < topics.length; i++) {
         let top = topics[i].topic;
         let tok = topics[i].token;
