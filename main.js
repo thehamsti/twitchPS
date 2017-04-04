@@ -36,34 +36,33 @@ class TwitchPubsub extends EventEmitter {
     this._ws = null;
 
     this._connect();
-
-    // TODO define variables needed and called any required functions (_connect)
   }
 
   _connect(){
     this._ws = new WebSocket(this._url);
 
     this._ws.on('open', function open() {
-      this._init_nonce = shortid.generate();
-      this.addTopic(this._init_topics, true); // TODO @addTopic IF INIT IS TRUE THEN SET NONCE TO SEND AS _INIT_NONCE
+      this.addTopic(this._init_topics, true);
     });
 
     this._ws.on('message', function inc(message) {
       message = JSON.parse(message);
 
       if(message.type === 'RESPONSE') {
-        if(message.nonce !== this._init_nonce) {
+        if(message.nonce === this._init_nonce) {
           this._init_nonce = null;
-          this._handleError('MESSAGE RESPONSE', message.error);
-          this.emit('error', 'Error while listening to initial topics', message.error);
+          if (message.error !== "") {
+            this._handleError('MESSAGE RESPONSE - Error while listening to initial topics', message.error);
+          }
         } else {
           if(this._pending[message.nonce]) {
             if (message.error !== ""){
-               this._pending[message.nonce].reject(message.error); // TODO IN ADDTOPICS MAKE REJECT CALLBACK remove from _topics
+               this._pending[message.nonce].reject(message.error);
             } else {
-              this._pending[message.nonce].resolve(); // TODO IN ADDTOPICS MAKE RESOLVE CALLBACK add to _topics
-              delete this._pending[message.nonce];
+              this._pending[message.nonce].resolve();
             }
+          } else {
+            this._handleError('MESSAGE RESPONSE', 'Received message with unknown nonce');
           }
         }
 
@@ -123,17 +122,16 @@ class TwitchPubsub extends EventEmitter {
 
   _reconnect(){
     this._ws.terminate();
-    if(this._debug) {
-      var d = new Date();
-      console.log(d.toLocaleString(), ' -- in _reconnect() -- websocket has been terminated');
-    }
+    this._debug('_reconnect()', 'Websocket has been terminated');
     setTimeout(function () {
       this._connect();
     }, 5000);
     // TODO write reconnection logic
   }
 
-
+  /*****
+   ****  Message Handler Functions
+   ****/
 
   /**
    * Handles Bits Message
@@ -214,6 +212,12 @@ class TwitchPubsub extends EventEmitter {
     }
   }
 
+  /***** End Message Handler Functions *****/
+
+  /*****
+   ****  Helper Functions
+   ****/
+
   /**
    * Handles error
    * @param {string} origin - Name of what callback function error originates from
@@ -236,6 +240,11 @@ class TwitchPubsub extends EventEmitter {
     }
   }
 
+  /***** End Helper Functions *****/
+
+  /*****
+   **** External Functions
+   ****/
 
   /**
    * Add new topics to listen too
@@ -248,6 +257,40 @@ class TwitchPubsub extends EventEmitter {
   addTopic(topics, init = false){
     return new Promise((resolve, reject) => {
 
+      for(topic in topics) {
+        let top = topic.topic;
+        let tok = topic.token;
+        let nonce = shortid.generate();
+        if (init) {
+          this._init_nonce = nonce;
+          init = false;
+        }
+        this._pending[nonce] = {
+          resolve: () => {
+            this._topics.push(topic);
+             _.pull(this._pending, nonce);
+            resolve();
+          },
+          reject: (err) => {
+            reject(err);
+            _.pull(this._pending, nonce);
+          }
+        };
+        this._ws.send(JSON.stringify({
+          type: 'LISTEN',
+          nonce,
+          data: {
+            topics: top,
+            auth_token: tok
+          }
+        }));
+        this.setTimeout(() => {
+          if(this._pending[nonce]) {
+            this._pending[nonce].reject('timeout');
+          }
+        }, 10000);
+      }
+
     });
 
   }
@@ -259,8 +302,35 @@ class TwitchPubsub extends EventEmitter {
    * TODO write removeTopic logic -- USE PROMISE HERE
    */
   removeTopic(topics){
+    return new Promise((resolve, reject) => {
 
+      let nonce = shortid.generate();
+
+      this._pending[nonce] = {
+        resolve: () => {
+          let removeTopic = (t) => {
+            _.pull(this._topics, t);
+          };
+          topics.map(removeTopic);
+          _.pull(this._pending, nonce);
+          resolve();
+        },
+        reject: (err) => {
+          reject(err);
+          _.pull(this._pending, nonce);
+        }
+      };
+      this._ws.send(JSON.stringify({
+        type: 'UNLISTEN',
+        nonce,
+        data: {
+          topics: [topics]
+        }
+      }));
+    });
   }
+
+  /***** End External Functions *****/
 
 
 }
