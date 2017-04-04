@@ -4,7 +4,7 @@ let WebSocket = require('ws'),
     EventEmitter = require ('events'),
     _ = require('lodash');
 
-class TwitchPubsub extends EventEmitter {
+class Pubsub extends EventEmitter {
   /**
    * Constructor
    * TODO define what options are needed/wanted for input by user
@@ -21,11 +21,11 @@ class TwitchPubsub extends EventEmitter {
     if(_.isEmpty(options.init_topics)) throw new Error('Missing initial topics');
     this._recon = options.reconnect;
     this._debug = options.debug;
-    this._url = options.url;
+    this._url = (options.url) ? options.url : 'wss://pubsub-edge.twitch.tv';
 
     this._init_topics = options.init_topics;
-    this._topics = {};
-    this._pending = {};
+    this._topics = [];
+    this._pending = [];
 
     this._interval = null;
     this._timeout = null;
@@ -36,46 +36,49 @@ class TwitchPubsub extends EventEmitter {
     this._ws = null;
 
     this._connect();
+
   }
 
   _connect(){
     this._ws = new WebSocket(this._url);
-
+    var self = this;
     this._ws.on('open', function open() {
-      this.addTopic(this._init_topics, true);
+      self.addTopic(self._init_topics, true);
+      console.log('open');
     });
 
-    this._ws.on('message', function inc(message) {
-      let message = JSON.parse(message);
+    this._ws.on('message', function inc(mess) {
+      let message = JSON.parse(mess);
+      console.log(mess)
 
       if(message.type === 'RESPONSE') {
-        if(message.nonce === this._init_nonce) {
-          this._init_nonce = null;
+        if(message.nonce === self._init_nonce) {
+          self._init_nonce = null;
           if (message.error !== "") {
-            this._handleError('MESSAGE RESPONSE - Error while listening to initial topics', message.error);
+            self._handleError('MESSAGE RESPONSE - Error while listening to initial topics', message.error);
           }
         } else {
-          if(this._pending[message.nonce]) {
+          if(self._pending[message.nonce]) {
             if (message.error !== ""){
-               this._pending[message.nonce].reject(message.error);
+               self._pending[message.nonce].reject(message.error);
             } else {
-              this._pending[message.nonce].resolve();
+              self._pending[message.nonce].resolve();
             }
           } else {
-            this._handleError('MESSAGE RESPONSE', 'Received message with unknown nonce');
+            self._handleError('MESSAGE RESPONSE', 'Received message with unknown nonce');
           }
         }
 
       } else if (message.type === 'MESSAGE') {
-        switch(message.data.topic.substr(0, data.topic.indexOf('.'))) {
+        switch(message.data.topic.substr(0, message.data.topic.indexOf('.'))) {
           case 'channel-bits-events-v1':
-            this._onBits(message);
+            self._onBits(message);
             break;
           case 'whispers':
-            this._onWhisper(message);
+            self._onWhisper(message);
             break;
           case 'video-playback':
-            this._onVideoPlayback(message);
+            self._onVideoPlayback(message);
             break;
         }
       } else if (message.type === 'RECONNECT') {
@@ -147,6 +150,7 @@ class TwitchPubsub extends EventEmitter {
    */
   _onBits(message){
     // TODO ADD VERSION CHECK/EMIT
+    message.data.message = JSON.parse(message.data.message);
     this.emit('bits', {
       "badge_entitlement" : message.data.message.badge_entitlement,
       "bits_used" : message.data.message.bits_used,
@@ -231,9 +235,10 @@ class TwitchPubsub extends EventEmitter {
    * @param {string} origin - Name of what callback function error originates from
    * @param {string} error - Error message to emit
    */
-  _handleError(origin, error){
-    let err_mess = 'Error found - ' , origin , ' - ' , error;
+  _handleError(orig, error){
+    let err_mess = 'Error found - ' + orig + ' - ' + error;
     this.emit('error', err_mess);
+    console.log(err_mess);
   }
 
   /**
@@ -244,7 +249,7 @@ class TwitchPubsub extends EventEmitter {
   _debug(origin, mess){
     if(this._debug) {
       var d = new Date();
-      this.emit('debug', d.toLocaleString(), ' -- in ', origin, ' -- ', mess)
+      this.emit('debug', d.toLocaleString() + ' -- in ' + origin + ' -- ' + mess);
     }
   }
 
@@ -256,18 +261,19 @@ class TwitchPubsub extends EventEmitter {
 
   /**
    * Add new topics to listen too
-   * 
+   *
    * @param {Object} topics - JSON Object array of topic(s)
    * @param {string} topics[].topic - Topic to listen too
    * @param {string} [token=Default Token] topics[].token - Authentication token
    * @param {Boolean} init - Boolean for if first topics to listen
    */
   addTopic(topics, init = false){
+    var self = this;
     return new Promise((resolve, reject) => {
-
-      for(topic in topics) {
-        let top = topic.topic;
-        let tok = topic.token;
+      if()
+      for(var i = 0; i < topics.length; i++) {
+        let top = topics[i].topic;
+        let tok = topics[i].token;
         let nonce = shortid.generate();
         if (init) {
           this._init_nonce = nonce;
@@ -275,8 +281,8 @@ class TwitchPubsub extends EventEmitter {
         }
         this._pending[nonce] = {
           resolve: () => {
-            this._topics.push(topic);
-             _.pull(this._pending, nonce);
+            this._topics.push(top);
+            _.pull(this._pending, nonce);
             resolve();
           },
           reject: (err) => {
@@ -288,11 +294,11 @@ class TwitchPubsub extends EventEmitter {
           type: 'LISTEN',
           nonce,
           data: {
-            topics: top,
+            topics: [top],
             auth_token: tok
           }
         }));
-        this.setTimeout(() => {
+        setTimeout(() => {
           if(this._pending[nonce]) {
             this._pending[nonce].reject('timeout');
           }
@@ -340,6 +346,5 @@ class TwitchPubsub extends EventEmitter {
 
   /***** End External Functions *****/
 
-
 }
-module.exports = TwitchPubsub;
+module.exports = Pubsub;
