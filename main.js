@@ -84,7 +84,9 @@ class TwitchPubsub extends EventEmitter {
       } else if (message.type === 'PONG') {
         clearTimeout(this._timeout);
         this._timeout = null;
-      } else if
+      } else {
+        // TODO UNKNOWN MESSAGE TYPE -- ERROR
+      }
     });
 
     this._ws.on('close', function inc() {
@@ -139,6 +141,7 @@ class TwitchPubsub extends EventEmitter {
    *
    */
   _onBits(message){
+    // TODO ADD VERSION CHECK/EMIT
     this.emit('bits', {
       "badge_entitlement" : message.data.message.badge_entitlement,
       "bits_used" : message.data.message.bits_used,
@@ -159,20 +162,56 @@ class TwitchPubsub extends EventEmitter {
 
   /**
    * Handles Whisper Message
-   *
+   * TODO WRITE COMMENT HEADER/DOCUMENTATION
    *
    */
   _onWhisper(message){
+
+    this.emit('whisper', {
+      id: message.data.message.data.id,
+      content: message.data.message.body,
+      thread: message.data.message.thread_id,
+      sender: {
+        id: message.data.message.from_id,
+        username: message.data.message.tags.login,
+        display_name: message.data.message.tags.display_name,
+        color: message.data.message.tags.color,
+        badges: message.data.message.tags.badges,
+        emotes: message.data.message.tags.emotes
+      },
+      recipient: message.data.message.recipient,
+      send_ts: message.data.message.send_ts,
+      nonce: message.data.message.nonce
+    });
 
   }
 
   /**
    * Handles Video-Playback Message
-   *
+   * TODO WRITE COMMENT HEADER/DOCUMENTATION
    *
    */
   _onVideoPlayback(message){
-
+    if(message.data.message.type === 'stream-up') {
+      // TODO WRITE COMMENT describing what is emitted.
+      this.emit('stream-up', {
+        time: message.data.message.server_time,
+        channel_name: message.data.message.channel_name,
+        play_delay: message.data.message.play_delay
+      });
+    } else if (message.data.message.type === 'stream-down') {
+      // TODO WRITE COMMENT describing what is emitted.
+      this.emit('stream-down', {
+        time: message.data.message.server_time,
+        channel_name: message.data.message.channel_name
+      });
+    } else if (message.data.message.type === 'viewcount') {
+      this.emit('viewcount', {
+        time: message.data.message.server_time,
+        channel_name: message.data.message.channel_name,
+        viewers: message.data.message.viewers
+      });
+    }
   }
 
   /**
@@ -183,7 +222,6 @@ class TwitchPubsub extends EventEmitter {
   _handleError(origin, error){
     let err_mess = 'Error found ' , origin , ' - ' , error;
     this.emit('error', err_mess);
-
   }
 
   /**
@@ -208,6 +246,9 @@ class TwitchPubsub extends EventEmitter {
    * TODO write addTopic logic -- USE PROMISE HERE
    */
   addTopic(topics, init = false){
+    return new Promise((resolve, reject) => {
+
+    });
 
   }
 
