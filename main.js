@@ -46,7 +46,7 @@ class TwitchPubsub extends EventEmitter {
     });
 
     this._ws.on('message', function inc(message) {
-      message = JSON.parse(message);
+      let message = JSON.parse(message);
 
       if(message.type === 'RESPONSE') {
         if(message.nonce === this._init_nonce) {
@@ -84,16 +84,24 @@ class TwitchPubsub extends EventEmitter {
         clearTimeout(this._timeout);
         this._timeout = null;
       } else {
-        // TODO UNKNOWN MESSAGE TYPE -- ERROR
+        this._handleError('MESSAGE RESPONSE - Unknown message type', message);
       }
     });
 
     this._ws.on('close', function inc() {
       if(this._recon) {
-        this._reconnect();
+        setTimeout(() => {
+          this._ws = new WebSocket(this._url);
+        }, 1000 * this._tries);
+        this._tries += 1;
       }
+      clearTimeout(this._timeout);
+      clearInterval(this._interval);
+      this._timeout = null;
+      this._interval = null;
 
-      // TODO CLEAR INTERVAL/TIMEOUT HERE
+      this.emit('close', this._recon);
+
     });
 
 
@@ -126,7 +134,6 @@ class TwitchPubsub extends EventEmitter {
     setTimeout(function () {
       this._connect();
     }, 5000);
-    // TODO write reconnection logic
   }
 
   /*****
@@ -204,6 +211,7 @@ class TwitchPubsub extends EventEmitter {
         channel_name: message.data.message.channel_name
       });
     } else if (message.data.message.type === 'viewcount') {
+      // TODO WRITE COMMENT describing what is emitted.
       this.emit('viewcount', {
         time: message.data.message.server_time,
         channel_name: message.data.message.channel_name,
@@ -224,7 +232,7 @@ class TwitchPubsub extends EventEmitter {
    * @param {string} error - Error message to emit
    */
   _handleError(origin, error){
-    let err_mess = 'Error found ' , origin , ' - ' , error;
+    let err_mess = 'Error found - ' , origin , ' - ' , error;
     this.emit('error', err_mess);
   }
 
@@ -236,7 +244,7 @@ class TwitchPubsub extends EventEmitter {
   _debug(origin, mess){
     if(this._debug) {
       var d = new Date();
-      console.log(d.toLocaleString(), ' -- in ', origin, ' -- ', mess);
+      this.emit('debug', d.toLocaleString(), ' -- in ', origin, ' -- ', mess)
     }
   }
 
@@ -248,11 +256,11 @@ class TwitchPubsub extends EventEmitter {
 
   /**
    * Add new topics to listen too
+   * 
    * @param {Object} topics - JSON Object array of topic(s)
    * @param {string} topics[].topic - Topic to listen too
    * @param {string} [token=Default Token] topics[].token - Authentication token
    * @param {Boolean} init - Boolean for if first topics to listen
-   * TODO write addTopic logic -- USE PROMISE HERE
    */
   addTopic(topics, init = false){
     return new Promise((resolve, reject) => {
