@@ -15,6 +15,9 @@ class Pubsub extends EventEmitter {
    * @param {string} options.init_topics.token - Authentication token
    * @param {boolean} options.debug - Turns debug logging on and off
    * @param {string} options.url - URL of WS to connect too. DEFAULT: Twitch {"wss://pubsub-edge.twitch.tv"}
+   *
+   *
+   * TODO FIGURE OUT PROMISE RESOLVE/REJECT ISNT CORRECTLY REMOVING FROM TOPICS, PENDING, ETC
    */
   constructor(options = {reconnect: true, init_topics: {}, debug: false, url: 'wss://pubsub-edge.twitch.tv'}) {
     super();
@@ -44,12 +47,17 @@ class Pubsub extends EventEmitter {
     var self = this;
     this._ws.on('open', function open() {
       self.addTopic(self._init_topics, true);
-      console.log('open');
+      console.log('Connected');
     });
 
     this._ws.on('message', function inc(mess) {
       let message = JSON.parse(mess);
-      console.log(mess)
+      if(self._debug) {
+        console.log(message);
+        console.log('topics', self._topics);
+        console.log('init_topics', self._init_topics);
+        console.log('pending', self._pending);
+      }
 
       if(message.type === 'RESPONSE') {
         if(message.nonce === self._init_nonce) {
@@ -70,6 +78,10 @@ class Pubsub extends EventEmitter {
         }
 
       } else if (message.type === 'MESSAGE') {
+        if (typeof message.data.message === 'string') message.data.message = JSON.parse(message.data.message);
+        let split = _.split(message.data.topic, '.', 2),
+            topic = split[0],
+            channel = split[1];
         switch(message.data.topic.substr(0, message.data.topic.indexOf('.'))) {
           case 'channel-bits-events-v1':
             self._onBits(message);
@@ -78,7 +90,7 @@ class Pubsub extends EventEmitter {
             self._onWhisper(message);
             break;
           case 'video-playback':
-            self._onVideoPlayback(message);
+            self._onVideoPlayback(message, channel);
             break;
         }
       } else if (message.type === 'RECONNECT') {
@@ -103,7 +115,6 @@ class Pubsub extends EventEmitter {
       this._timeout = null;
       this._interval = null;
 
-      this.emit('close', this._recon);
 
     });
 
@@ -200,25 +211,25 @@ class Pubsub extends EventEmitter {
    * TODO WRITE COMMENT HEADER/DOCUMENTATION
    *
    */
-  _onVideoPlayback(message){
+  _onVideoPlayback(message, channel){
     if(message.data.message.type === 'stream-up') {
       // TODO WRITE COMMENT describing what is emitted.
       this.emit('stream-up', {
         time: message.data.message.server_time,
-        channel_name: message.data.message.channel_name,
+        channel_name: channel,
         play_delay: message.data.message.play_delay
       });
     } else if (message.data.message.type === 'stream-down') {
       // TODO WRITE COMMENT describing what is emitted.
       this.emit('stream-down', {
         time: message.data.message.server_time,
-        channel_name: message.data.message.channel_name
+        channel_name: channel
       });
     } else if (message.data.message.type === 'viewcount') {
       // TODO WRITE COMMENT describing what is emitted.
       this.emit('viewcount', {
         time: message.data.message.server_time,
-        channel_name: message.data.message.channel_name,
+        channel_name: channel,
         viewers: message.data.message.viewers
       });
     }
@@ -253,6 +264,24 @@ class Pubsub extends EventEmitter {
     }
   }
 
+  /**
+   * Wait for websocket
+   *
+   */
+  _wait(callback) {
+    setTimeout(() => {
+      if (this._ws.readyState === 1) {
+        console.log("Connected");
+        if(callback != null) {
+          callback();
+        }
+        return;
+      } else {
+        if(this._debug) console.log("Waiting for connection");
+        this._wait(callback);
+      }
+    }, 5);
+  }
   /***** End Helper Functions *****/
 
   /*****
@@ -268,43 +297,44 @@ class Pubsub extends EventEmitter {
    * @param {Boolean} init - Boolean for if first topics to listen
    */
   addTopic(topics, init = false){
-    var self = this;
+
     return new Promise((resolve, reject) => {
 
-      for(var i = 0; i < topics.length; i++) {
-        let top = topics[i].topic;
-        let tok = topics[i].token;
-        let nonce = shortid.generate();
-        if (init) {
-          this._init_nonce = nonce;
-          init = false;
+      this._wait(() => {
+        for(var i = 0; i < topics.length; i++) {
+          let top = topics[i].topic;
+          let tok = topics[i].token;
+          let nonce = shortid.generate();
+          if (init) {
+            this._init_nonce = nonce;
+            init = false;
+          }
+          this._pending[nonce] = {
+            resolve: () => {
+              this._topics.push(top);
+              resolve();
+              _.pull(this._pending, nonce);
+            },
+            reject: (err) => {
+              reject(err);
+              _.pull(this._pending, nonce);
+            }
+          };
+          this._ws.send(JSON.stringify({
+            type: 'LISTEN',
+            nonce,
+            data: {
+              topics: [top],
+              auth_token: tok
+            }
+          }));
+          setTimeout(() => {
+            if(this._pending[nonce]) {
+              this._pending[nonce].reject('timeout');
+            }
+          }, 10000);
         }
-        this._pending[nonce] = {
-          resolve: () => {
-            this._topics.push(top);
-            _.pull(this._pending, nonce);
-            resolve();
-          },
-          reject: (err) => {
-            reject(err);
-            _.pull(this._pending, nonce);
-          }
-        };
-        this._ws.send(JSON.stringify({
-          type: 'LISTEN',
-          nonce,
-          data: {
-            topics: [top],
-            auth_token: tok
-          }
-        }));
-        setTimeout(() => {
-          if(this._pending[nonce]) {
-            this._pending[nonce].reject('timeout');
-          }
-        }, 10000);
-      }
-
+      });
     });
 
   }
@@ -317,30 +347,34 @@ class Pubsub extends EventEmitter {
    */
   removeTopic(topics){
     return new Promise((resolve, reject) => {
+      this._wait(() => {
+        for(var i = 0; i < topics.length; i++) {
+          let top = topics[i].topic;
+          let nonce = shortid.generate();
 
-      let nonce = shortid.generate();
-
-      this._pending[nonce] = {
-        resolve: () => {
-          let removeTopic = (t) => {
-            _.pull(this._topics, t);
+          this._pending[nonce] = {
+            resolve: () => {
+              let removeTopic = (t) => {
+                _.pull(this._topics, t);
+              };
+              topics.map(removeTopic);
+              _.pull(this._pending, nonce);
+              resolve();
+            },
+            reject: (err) => {
+              reject(err);
+              _.pull(this._pending, nonce);
+            }
           };
-          topics.map(removeTopic);
-          _.pull(this._pending, nonce);
-          resolve();
-        },
-        reject: (err) => {
-          reject(err);
-          _.pull(this._pending, nonce);
+          this._ws.send(JSON.stringify({
+            type: 'UNLISTEN',
+            nonce,
+            data: {
+              topics: [top]
+            }
+          }));
         }
-      };
-      this._ws.send(JSON.stringify({
-        type: 'UNLISTEN',
-        nonce,
-        data: {
-          topics: [topics]
-        }
-      }));
+      });
     });
   }
 
