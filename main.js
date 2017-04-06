@@ -316,7 +316,7 @@ class TwitchPS extends EventEmitter {
             },
             reject: (err) => {
               reject(err);
-              this._handleError('Rejected promise', err);
+              this._handleError('Rejected addTopic() promise', err);
               _.pull(this._pending, nonce);
             }
           };
@@ -363,6 +363,7 @@ class TwitchPS extends EventEmitter {
             },
             reject: (err) => {
               reject(err);
+              this._handleError('Rejected removeTopic() promise', err);
               _.pull(this._pending, nonce);
             }
           };
