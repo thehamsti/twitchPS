@@ -52,12 +52,7 @@ class TwitchPS extends EventEmitter {
 
     this._ws.on('message', function inc(mess) {
       let message = JSON.parse(mess);
-      if(self._debug) {
-        console.log(message);
-        console.log('topics', self._topics);
-        console.log('init_topics', self._init_topics);
-        console.log('pending', self._pending);
-      }
+      self._sendDebug('_connect()', message);
 
       if(message.type === 'RESPONSE') {
         if(message.nonce === self._init_nonce) {
@@ -126,13 +121,11 @@ class TwitchPS extends EventEmitter {
       }
     }, 30000);
 
-    // ---- PingInterval/Timeout
-
     /**
      * MSG TYPES:
      *   PONG - response to send type ping
      *   RECONNECT - sent when server restarting - reconnect to server - TODO HANDLE FAILED CONNECTION ATTEMPTS
-     *   RESPONSE - sent from server after receiving listen message -- if error is empty string then it is good - TODO USE PROMISE HERE --
+     *   RESPONSE - sent from server after receiving listen message -- if error is empty string then it is good -
      *     Types of errors: TODO HANDLE RESPONSE ERRORS
      *       ERR_BADMESSAGE
      *       ERR_BADAUTH
@@ -143,7 +136,7 @@ class TwitchPS extends EventEmitter {
 
   _reconnect(){
     this._ws.terminate();
-    this._debug('_reconnect()', 'Websocket has been terminated');
+    this._sendDebug('_reconnect()', 'Websocket has been terminated');
     setTimeout(function () {
       this._connect();
     }, 5000);
@@ -256,10 +249,10 @@ class TwitchPS extends EventEmitter {
    * @param {string} origin - Name of what callback function error originates from
    * @param {string} mess - Status message to emit
    */
-  _debug(origin, mess){
+  _sendDebug(origin, mess){
     if(this._debug) {
       var d = new Date();
-      console.log('Pubsub -- ' + d.toLocaleString() + ' -- in ' + origin + ' -- ' + mess);
+      console.log('TwitchPS -- ' + d.toLocaleString() + ' -- in ' + origin + ' -- ' + mess);
     }
   }
 
@@ -270,13 +263,13 @@ class TwitchPS extends EventEmitter {
   _wait(callback) {
     setTimeout(() => {
       if (this._ws.readyState === 1) {
-        console.log("Connected");
+        this._sendDebug('_wait()','Connected');
         if(callback != null) {
           callback();
         }
         return;
       } else {
-        if(this._debug) console.log("Waiting for connection");
+        this._sendDebug('_wait()', 'Waiting for connection');
         this._wait(callback);
       }
     }, 5);
@@ -343,7 +336,7 @@ class TwitchPS extends EventEmitter {
    * Remove topic(s) from list of topics and unlisten
    * @param {Object} topics - JSON object array of topics
    * @param {string} topics.topic - Topic to unlisten
-   * TODO write removeTopic logic -- USE PROMISE HERE
+   *
    */
   removeTopic(topics){
     return new Promise((resolve, reject) => {
