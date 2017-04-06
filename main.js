@@ -4,10 +4,10 @@ let WebSocket = require('ws'),
     EventEmitter = require ('events'),
     _ = require('lodash');
 
-class Pubsub extends EventEmitter {
+class TwitchPS extends EventEmitter {
   /**
    * Constructor
-   * TODO define what options are needed/wanted for input by user
+   *
    * @param {Object} options - JSON object of required options
    * @param {boolean} options.reconnect - True to try to reconnect, false to not
    * @param {Object} options.init_topics - JSON Object array of initial topic(s0
@@ -126,7 +126,6 @@ class Pubsub extends EventEmitter {
       }
     }, 30000);
 
-    // TODO write connection logic
     // ---- PingInterval/Timeout
 
     /**
@@ -260,7 +259,7 @@ class Pubsub extends EventEmitter {
   _debug(origin, mess){
     if(this._debug) {
       var d = new Date();
-      this.emit('debug', d.toLocaleString() + ' -- in ' + origin + ' -- ' + mess);
+      console.log('Pubsub -- ' + d.toLocaleString() + ' -- in ' + origin + ' -- ' + mess);
     }
   }
 
@@ -317,6 +316,7 @@ class Pubsub extends EventEmitter {
             },
             reject: (err) => {
               reject(err);
+              this._handleError('Rejected promise', err);
               _.pull(this._pending, nonce);
             }
           };
@@ -381,4 +381,4 @@ class Pubsub extends EventEmitter {
   /***** End External Functions *****/
 
 }
-module.exports = Pubsub;
+module.exports = TwitchPS;
