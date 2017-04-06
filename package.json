@@ -1,6 +1,6 @@
 {
   "name": "twitch_pubsub",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Library to easily interact with Twitch PubSub System",
   "main": "main.js",
   "scripts": {
