@@ -49,7 +49,17 @@ class TwitchPS extends EventEmitter {
       self.addTopic(self._init_topics, true);
       console.log('Connected');
     });
-
+    /**
+     * MSG TYPES:
+     *   PONG - response to send type ping
+     *   RECONNECT - sent when server restarting - reconnect to server
+     *   RESPONSE - sent from server after receiving listen message -- if error is empty string then it is good -
+     *     Types of errors:
+     *       ERR_BADMESSAGE
+     *       ERR_BADAUTH
+     *       ERR_SERVER
+     *       ERR_BADTOPIC
+     */
     this._ws.on('message', function inc(mess) {
       let message = JSON.parse(mess);
       self._sendDebug('_connect()', message);
@@ -121,17 +131,6 @@ class TwitchPS extends EventEmitter {
       }
     }, 30000);
 
-    /**
-     * MSG TYPES:
-     *   PONG - response to send type ping
-     *   RECONNECT - sent when server restarting - reconnect to server - TODO HANDLE FAILED CONNECTION ATTEMPTS
-     *   RESPONSE - sent from server after receiving listen message -- if error is empty string then it is good -
-     *     Types of errors: TODO HANDLE RESPONSE ERRORS
-     *       ERR_BADMESSAGE
-     *       ERR_BADAUTH
-     *       ERR_SERVER
-     *       ERR_BADTOPIC
-     */
   }
 
   _reconnect(){
@@ -148,12 +147,29 @@ class TwitchPS extends EventEmitter {
 
   /**
    * Handles Bits Message
-   * TODO WRITE COMMENT HEADER/DOCUMENTATION
+   * @param message - {object} - Message object received from pubsub-edge
+   * @param message.type - {string} - Type of message - Will always be 'MESSAGE' - Handled by _connect()
+   * @param message.data - {JSON} - JSON wrapper of topic/message fields
+   * @param message.data.topic - {string} - Topic that message pertains too - Will always be 'channel-bits-events-v1.<CHANNEL_ID>' - Handled by _connect()
+   * @param message.data.message - {JSON} - Parsed into JSON in _connect() - Originally received as string from Twitch
+   * @return JSON object -
+   *                     badge_entitlement - {object} - Information about the user’s new badge level, if the user reached a new badge level with this cheer; otherwise. null.
+   *                     bits_used - {integer} - Number of bits used
+   *                     channel_id - {string} - User ID of the channel on which bits were used
+   *                     channel_name - {string} - Name of the channel on which bits were used
+   *                     chat_message - {string} - Chat message sent with the cheer
+   *                     context - {string} - Event type associated with this use of bits
+   *                     message_id - {string} - Message ID
+   *                     message_type - {string} - Message type
+   *                     time - {string} - Time when the bits were used. RFC 3339 format
+   *                     total_bits_used - {integer} - All-time total number of bits used on this channel by the specified user
+   *                     user_id - {string} - User ID of the person who used the bits
+   *                     user_name - {string} - Login name of the person who used the bits
+   *                     version - {string} - Message version
    *
    */
   _onBits(message){
     // TODO ADD VERSION CHECK/EMIT
-    message.data.message = JSON.parse(message.data.message);
     this.emit('bits', {
       "badge_entitlement" : message.data.message.badge_entitlement,
       "bits_used" : message.data.message.bits_used,
@@ -174,15 +190,22 @@ class TwitchPS extends EventEmitter {
 
   /**
    * Handles Whisper Message
-   * TODO WRITE COMMENT HEADER/DOCUMENTATION
-   *
+   * @param message - {object} - Message object received from pubsub-edge
+   * @param message.type - {string} - Type of message - Will always be 'MESSAGE' - Handled by _connect()
+   * @param message.data - {JSON} - JSON wrapper of topic/message fields
+   * @param message.data.topic - {string} - Topic that message pertains too - Will always be 'whispers.<CHANNEL_ID>' - Handled by _connect()
+   * @param message.data.message - {JSON} - Parsed into JSON in _connect() - Originally received as string from Twitch
+   * @return JSON object -
+   *                     id - {integer} - Message ID
+   *                     content - {string} - Body of message sent
+   *                     thread_id - {}
    */
   _onWhisper(message){
 
     this.emit('whisper', {
       id: message.data.message.data.id,
-      content: message.data.message.body,
-      thread: message.data.message.thread_id,
+      body: message.data.message.body,
+      thread_id: message.data.message.thread_id,
       sender: {
         id: message.data.message.from_id,
         username: message.data.message.tags.login,
