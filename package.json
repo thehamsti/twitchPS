@@ -8,14 +8,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/jctrvlr/twitch_pubsub.git"
+    "url": "git+https://github.com/jctrvlr/twitchps.git"
   },
   "author": "John Cummings",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/jctrvlr/twitch_pubsub/issues"
+    "url": "https://github.com/jctrvlr/twitchps/issues"
   },
-  "homepage": "https://github.com/jctrvlr/twitch_pubsub#readme",
+  "homepage": "https://github.com/jctrvlr/twitchps#readme",
   "dependencies": {
     "bluebird": "^3.5.0",
     "events": "^1.1.1",
