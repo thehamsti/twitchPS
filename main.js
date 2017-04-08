@@ -16,8 +16,6 @@ class TwitchPS extends EventEmitter {
    * @param {boolean} options.debug - Turns debug logging on and off
    * @param {string} options.url - URL of WS to connect too. DEFAULT: Twitch {"wss://pubsub-edge.twitch.tv"}
    *
-   *
-   * TODO FIGURE OUT PROMISE RESOLVE/REJECT ISNT CORRECTLY REMOVING FROM TOPICS, PENDING, ETC
    */
   constructor(options = {reconnect: true, init_topics: {}, debug: false, url: 'wss://pubsub-edge.twitch.tv'}) {
     super();
@@ -73,87 +71,96 @@ class TwitchPS extends EventEmitter {
      *       ERR_BADTOPIC
      */
     this._ws.on('message', function inc(mess) {
-      let message = JSON.parse(mess);
-      self._sendDebug('_connect()', message);
+      try {
+        let message = JSON.parse(mess);
+        self._sendDebug('_connect()', message);
 
-      if(message.type === 'RESPONSE') {
-        if(message.nonce === self._init_nonce) {
-          self._init_nonce = null;
-          if (message.error !== "") {
-            self._handleError('MESSAGE RESPONSE - Error while listening to initial topics', message.error);
-          }
-        } else {
-          if(self._pending[message.nonce]) {
-            if (message.error !== ""){
+        if(message.type === 'RESPONSE') {
+          if(message.nonce === self._init_nonce) {
+            self._init_nonce = null;
+            if (message.error !== "") {
               self._pending[message.nonce].reject(message.error);
+              self._handleError('MESSAGE RESPONSE - Error while listening to initial topics', message.error);
             } else {
               self._pending[message.nonce].resolve();
             }
           } else {
-            self._handleError('MESSAGE RESPONSE', 'Received message with unknown nonce');
+            if(self._pending[message.nonce]) {
+              if (message.error !== ""){
+                self._pending[message.nonce].reject(message.error);
+              } else {
+                self._pending[message.nonce].resolve();
+              }
+            } else {
+              self._handleError('MESSAGE RESPONSE', 'Received message with unknown nonce');
+            }
           }
-        }
 
-      } else if (message.type === 'MESSAGE') {
-        if (typeof message.data.message === 'string') message.data.message = JSON.parse(message.data.message);
-        let split = _.split(message.data.topic, '.', 2),
-            topic = split[0],
-            channel = split[1];
-        switch(message.data.topic.substr(0, message.data.topic.indexOf('.'))) {
-          case 'channel-bits-events-v1':
-            self._onBits(message);
-            break;
-          case 'whispers':
-            self._onWhisper(message);
-            break;
-          case 'video-playback':
-            self._onVideoPlayback(message, channel);
-            break;
+        } else if (message.type === 'MESSAGE') {
+          if (typeof message.data.message === 'string') message.data.message = JSON.parse(message.data.message);
+          let split = _.split(message.data.topic, '.', 2),
+              topic = split[0],
+              channel = split[1];
+          switch(message.data.topic.substr(0, message.data.topic.indexOf('.'))) {
+            case 'channel-bits-events-v1':
+              self._onBits(message);
+              break;
+            case 'whispers':
+              self._onWhisper(message);
+              break;
+            case 'video-playback':
+              self._onVideoPlayback(message, channel);
+              break;
+          }
+        } else if (message.type === 'RECONNECT') {
+          self._reconnect();
+        } else if (message.type === 'PONG') {
+          self._sendDebug('In messageType Pong', 'Received pong');
+          clearTimeout(self._timeout);
+          self._timeout = null;
+        } else {
+          self._handleError('MESSAGE RESPONSE - Unknown message type', message);
         }
-      } else if (message.type === 'RECONNECT') {
-        this._reconnect();
-      } else if (message.type === 'PONG') {
-        clearTimeout(this._timeout);
-        this._timeout = null;
-      } else {
-        this._handleError('MESSAGE RESPONSE - Unknown message type', message);
+      } catch (e) {
+        self._handleError('Error caught in _connect() on message', e);
       }
     });
 
     this._ws.on('close', function inc() {
-      if(this._recon) {
+      self._sendDebug('In websocket close', '');
+      if(self._recon) {
         setTimeout(() => {
-          this._ws = new WebSocket(this._url);
-        }, 1000 * this._tries);
-        this._tries += 1;
+          self._ws = new WebSocket(self._url);
+        }, 1000 * self._tries);
+        self._tries += 1;
       }
-      clearTimeout(this._timeout);
-      clearInterval(this._interval);
-      this._timeout = null;
-      this._interval = null;
+      clearTimeout(self._timeout);
+      clearInterval(self._interval);
+      self._timeout = null;
+      self._interval = null;
 
 
     });
 
-
-    this._interval = setInterval(() => {
-      if(this._ws.readystate === WebSocket.OPEN) {
-        this._ws.send(JSON.stringify({type: 'PING'}));
-        this._timeout = setTimeout(() => this._reconnect(), 15000);
+    self._interval = setInterval(() => {
+      if(self._ws.readyState === 1) {
+        self._ws.send(JSON.stringify({type: 'PING'}));
+        self._sendDebug('In setInterval', 'Sent ping');
+        self._timeout = setTimeout(() => self._reconnect(), 15000);
       }
-    }, 30000);
-
+    }, 300000);
   }
 
   /**
    * Reconnect function - Terminates current websocket connection and reconnects
    *
-   */  
+   */
   _reconnect(){
-    this._ws.terminate();
-    this._sendDebug('_reconnect()', 'Websocket has been terminated');
+    var self = this;
+    self._ws.terminate();
+    self._sendDebug('_reconnect()', 'Websocket has been terminated');
     setTimeout(function () {
-      this._connect();
+      self._connect();
     }, 5000);
   }
 
@@ -188,19 +195,22 @@ class TwitchPS extends EventEmitter {
   _onBits(message){
     // TODO ADD VERSION CHECK/EMIT
     this.emit('bits', {
-      "badge_entitlement" : message.data.message.badge_entitlement,
-      "bits_used" : message.data.message.bits_used,
-      "channel_id" : message.data.message.channel_id,
-      "channel_name" : message.data.message.channel_name,
-      "chat_message" : message.data.message.chat_message,
-      "context" : message.data.message.context,
-      "message_id" : message.data.message.message_id,
-      "message_type" : message.data.message.message_type,
-      "time" : message.data.message.time,
-      "total_bits_used" : message.data.message.total_bits_used,
-      "user_id" : message.data.message.user_id,
-      "user_name" : message.data.message.user_name,
-      "version" : message.data.message.version
+      "badge_entitlement" : {
+        "old_badge": message.data.message.data.badge_entitlement.previous_version,
+        "new_badge": message.data.message.data.badge_entitlement.new_version
+      },
+      "bits_used" : message.data.message.data.bits_used,
+      "channel_id" : message.data.message.data.channel_id,
+      "channel_name" : message.data.message.data.channel_name,
+      "chat_message" : message.data.message.data.chat_message,
+      "context" : message.data.message.data.context,
+      "message_id" : message.data.message.data.message_id,
+      "message_type" : message.data.message.data.message_type,
+      "time" : message.data.message.data.time,
+      "total_bits_used" : message.data.message.data.total_bits_used,
+      "user_id" : message.data.message.data.user_id,
+      "user_name" : message.data.message.data.user_name,
+      "version" : message.data.message.data.version
     });
 
   }
@@ -235,28 +245,30 @@ class TwitchPS extends EventEmitter {
    *
    */
   _onWhisper(message){
-
+    if (typeof message.data.message.tags === 'string') message.data.message.tags = JSON.parse(message.data.message.tags);
+    if (typeof message.data.message.recipient === 'string') message.data.message.recipient = JSON.parse(message.data.message.recipient);
+    // TODO Emit different events for different Message types -- whisper_received, whisper_sent, thread, --- Emit all data received
     this.emit('whisper', {
-      id: message.data.message.data.id,
-      body: message.data.message.body,
-      thread_id: message.data.message.thread_id,
+      id: message.data.message.data_object.id,
+      body: message.data.message.data_object.body,
+      thread_id: message.data.message.data_object.thread_id,
       sender: {
-        id: message.data.message.from_id,
-        username: message.data.message.tags.login,
-        display_name: message.data.message.tags.display_name,
-        color: message.data.message.tags.color,
-        badges: message.data.message.tags.badges,
-        emotes: message.data.message.tags.emotes
+        id: message.data.message.data.from_id,
+        username: message.data.message.data_object.tags.login,
+        display_name: message.data.message.data_object.tags.display_name,
+        color: message.data.message.data_object.tags.color,
+        badges: message.data.message.data_object.tags.badges,
+        emotes: message.data.message.data_object.tags.emotes
       },
       recipient: {
-        id: message.data.message.recipient.id,
-        username: message.data.message.recipient.username,
-        display_name: message.data.message.recipient.display_name,
-        color: message.data.message.recipient.color,
-        badges: message.data.message.recipient.badges
+        id: message.data.message.data_object.recipient.id,
+        username: message.data.message.data_object.recipient.username,
+        display_name: message.data.message.data_object.recipient.display_name,
+        color: message.data.message.data_object.recipient.color,
+        badges: message.data.message.data_object.recipient.badges
       },
-      sent_ts: message.data.message.sent_ts,
-      nonce: message.data.message.nonce
+      sent_ts: message.data.message.data_object.sent_ts,
+      nonce: message.data.message.data_object.nonce
     });
 
   }
@@ -319,9 +331,8 @@ class TwitchPS extends EventEmitter {
    * @param {string} error - Error message to emit
    */
   _handleError(orig, error){
-    let err_mess = 'Error found - ' + orig + ' - ' + error;
-    this.emit('error', err_mess);
-    console.log(err_mess);
+    let err_mess = 'Error found - ' + orig + ' - ';
+    console.error(err_mess, error);
   }
 
   /**
@@ -332,7 +343,7 @@ class TwitchPS extends EventEmitter {
   _sendDebug(origin, mess){
     if(this._debug) {
       var d = new Date();
-      console.log('TwitchPS -- ' + d.toLocaleString() + ' -- in ' + origin + ' -- ' + mess);
+      console.log('TwitchPS -- ' + d.toLocaleString() + ' -- in ' + origin + ' -- ',  mess);
     }
   }
 
@@ -384,13 +395,13 @@ class TwitchPS extends EventEmitter {
           this._pending[nonce] = {
             resolve: () => {
               this._topics.push(top);
+              delete this._pending[nonce];
               resolve();
-              _.pull(this._pending, nonce);
             },
             reject: (err) => {
               reject(err);
               this._handleError('Rejected addTopic() promise', err);
-              _.pull(this._pending, nonce);
+              delete this._pending[nonce];
             }
           };
           this._ws.send(JSON.stringify({
@@ -428,16 +439,16 @@ class TwitchPS extends EventEmitter {
           this._pending[nonce] = {
             resolve: () => {
               let removeTopic = (t) => {
-                _.pull(this._topics, t);
+                delete this._topics[nonce];
               };
               topics.map(removeTopic);
-              _.pull(this._pending, nonce);
+              delete this._pending[nonce];
               resolve();
             },
             reject: (err) => {
               reject(err);
               this._handleError('Rejected removeTopic() promise', err);
-              _.pull(this._pending, nonce);
+              delete this._pending[nonce];
             }
           };
           this._ws.send(JSON.stringify({
