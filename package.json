@@ -1,5 +1,5 @@
 {
-  "name": "twitch_pubsub",
+  "name": "twitchps",
   "version": "0.2.0",
   "description": "Library to easily interact with Twitch PubSub System",
   "main": "main.js",
