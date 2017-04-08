@@ -2,6 +2,14 @@
   "name": "twitchps",
   "version": "0.2.1",
   "description": "Library to easily interact with Twitch PubSub System",
+  "keywords": [
+    "twitch",
+    "twitch.tv",
+    "pubsub",
+    "whisper",
+    "bits",
+    "cheers"
+  ],
   "main": "main.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
