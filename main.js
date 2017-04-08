@@ -10,7 +10,7 @@ class TwitchPS extends EventEmitter {
    *
    * @param {Object} options - JSON object of required options
    * @param {boolean} options.reconnect - True to try to reconnect, false to not
-   * @param {Object} options.init_topics - JSON Object array of initial topic(s0
+   * @param {Object} options.init_topics - JSON Object array of initial topic
    * @param {string} options.init_topics.topic - Topic to listen too
    * @param {string} options.init_topics.token - Authentication token
    * @param {boolean} options.debug - Turns debug logging on and off
@@ -42,6 +42,10 @@ class TwitchPS extends EventEmitter {
 
   }
 
+  /**
+   * Initial connection function -- Sets up connection, and websocket listeners
+   *
+   */
   _connect(){
     this._ws = new WebSocket(this._url);
     var self = this;
@@ -50,9 +54,17 @@ class TwitchPS extends EventEmitter {
       console.log('Connected');
     });
     /**
-     * MSG TYPES:
+     * MSG TYPES HANDLED:
      *   PONG - response to send type ping
      *   RECONNECT - sent when server restarting - reconnect to server
+     *   MESSAGE - sent from server with message data - different topics - See topic handler section for emit details
+     *     Types of topics:
+     *        channel-bits-events-v1 - Bits - Sent on cheer events
+     *        whispers - Whisper - Sent on whisper events
+     *        video-playback - Sent on update to stream -
+     *            stream-up - Sent when stream starts
+     *            stream-down - Sent when stream ends
+     *            viewcount - Sent on update to viewer count
      *   RESPONSE - sent from server after receiving listen message -- if error is empty string then it is good -
      *     Types of errors:
      *       ERR_BADMESSAGE
@@ -133,6 +145,10 @@ class TwitchPS extends EventEmitter {
 
   }
 
+  /**
+   * Reconnect function - Terminates current websocket connection and reconnects
+   *
+   */  
   _reconnect(){
     this._ws.terminate();
     this._sendDebug('_reconnect()', 'Websocket has been terminated');
@@ -152,7 +168,8 @@ class TwitchPS extends EventEmitter {
    * @param message.data - {JSON} - JSON wrapper of topic/message fields
    * @param message.data.topic - {string} - Topic that message pertains too - Will always be 'channel-bits-events-v1.<CHANNEL_ID>' - Handled by _connect()
    * @param message.data.message - {JSON} - Parsed into JSON in _connect() - Originally received as string from Twitch
-   * @return JSON object -
+   * @emits bits - {event} -
+   *         JSON object -
    *                     badge_entitlement - {object} - Information about the user’s new badge level, if the user reached a new badge level with this cheer; otherwise. null.
    *                     bits_used - {integer} - Number of bits used
    *                     channel_id - {string} - User ID of the channel on which bits were used
@@ -195,10 +212,27 @@ class TwitchPS extends EventEmitter {
    * @param message.data - {JSON} - JSON wrapper of topic/message fields
    * @param message.data.topic - {string} - Topic that message pertains too - Will always be 'whispers.<CHANNEL_ID>' - Handled by _connect()
    * @param message.data.message - {JSON} - Parsed into JSON in _connect() - Originally received as string from Twitch
-   * @return JSON object -
+   * @emits whisper - {event} -
+   *          JSON object -
    *                     id - {integer} - Message ID
-   *                     content - {string} - Body of message sent
-   *                     thread_id - {}
+   *                     body - {string} - Body of message sent
+   *                     thread_id - {string} - Thread ID
+   *                     sender - {JSON} - Object containing message sender's Information
+   *                        sender.id - {integer} - User ID of sender
+   *                        sender.username - {string} - Username of sender
+   *                        sender.display_name - {string} - Display name of sender (Usually only differs in letter case)
+   *                        sender.color - {string} - Color hex-code of sender username in chat
+   *                        sender.badges - {Array} - Array of sender badges
+   *                        sender.emotes - {Array} - Array of emotes usable by sender
+   *                     recipient - {JSON} - Object containing message recipient's Information
+   *                        recipient.id - {integer} - User ID of recipient
+   *                        recipient.username - {string} - Username of recipient
+   *                        recipient.display_name - {string} - Display name of recipient(Usually only differs in letter case)
+   *                        recipient.color - {string} - Color hex-code of recipient username in chat
+   *                        recipient.badges - {Array} - Array of recipient badges
+   *                     sent_ts - {integer} - Timestamp of when message was sent
+   *                     nonce - {string} - Nonce associated with whisper message
+   *
    */
   _onWhisper(message){
 
@@ -214,8 +248,14 @@ class TwitchPS extends EventEmitter {
         badges: message.data.message.tags.badges,
         emotes: message.data.message.tags.emotes
       },
-      recipient: message.data.message.recipient,
-      send_ts: message.data.message.send_ts,
+      recipient: {
+        id: message.data.message.recipient.id,
+        username: message.data.message.recipient.username,
+        display_name: message.data.message.recipient.display_name,
+        color: message.data.message.recipient.color,
+        badges: message.data.message.recipient.badges
+      },
+      sent_ts: message.data.message.sent_ts,
       nonce: message.data.message.nonce
     });
 
@@ -223,25 +263,42 @@ class TwitchPS extends EventEmitter {
 
   /**
    * Handles Video-Playback Message
-   * TODO WRITE COMMENT HEADER/DOCUMENTATION
+   * @param message - {object} - Message object received from pubsub-edge
+   * @param message.type - {string} - Type of message - Will always be 'MESSAGE' - Handled by _connect()
+   * @param message.data - {JSON} - JSON wrapper of topic/message fields
+   * @param message.data.topic - {string} - Topic that message pertains too - Will always be 'whispers.<CHANNEL_ID>' - Handled by _connect()
+   * @param message.data.message - {JSON} - Parsed into JSON in _connect() - Originally received as string from Twitch
+   * @param channel - {string} - Channel name from
+   * @emits stream-up, stream-down, viewcount
+   *          stream-up -
+   *            JSON object -
+   *                      time - {integer} - Server time. RFC 3339 format
+   *                      channel_name - {string} - Channel name
+   *                      play_delay - {string} - Delay of stream
+   *          stream-down -
+   *            JSON object -
+   *                      time - {integer} - Server time. RFC 3339 format
+   *                      channel_name - {string} - Channel name
+   *          viewcount -
+   *            JSON object -
+   *                      time - {integer} - Server time. RFC 3339 format
+   *                      channel_name - {string} - Channel name
+   *                      viewers - {integer} - Number of viewers currently watching
    *
    */
   _onVideoPlayback(message, channel){
     if(message.data.message.type === 'stream-up') {
-      // TODO WRITE COMMENT describing what is emitted.
       this.emit('stream-up', {
         time: message.data.message.server_time,
         channel_name: channel,
         play_delay: message.data.message.play_delay
       });
     } else if (message.data.message.type === 'stream-down') {
-      // TODO WRITE COMMENT describing what is emitted.
       this.emit('stream-down', {
         time: message.data.message.server_time,
         channel_name: channel
       });
     } else if (message.data.message.type === 'viewcount') {
-      // TODO WRITE COMMENT describing what is emitted.
       this.emit('viewcount', {
         time: message.data.message.server_time,
         channel_name: channel,
