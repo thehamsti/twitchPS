@@ -1,5 +1,6 @@
 # [TwitchPS](https://github.com/jctrvlr/twitchps)
- [![dependency status](https://david-dm.org/jctrvlr/twitchps.svg)](https://david-dm.org/jctrvlr/twitchps) [![Downloads](https://img.shields.io/npm/dm/twitchps.svg?style=flat)](https://www.npmjs.org/package/twitchps) [![Version](https://img.shields.io/npm/v/twitchps.svg?style=flat)](https://www.npmjs.org/package/twitchps)  [![GitHub issues](https://img.shields.io/github/issues/jctrvlr/twitchPS.svg)](https://github.com/jctrvlr/twitchPS/issues)
+ [![dependency status](https://david-dm.org/jctrvlr/twitchps.svg)](https://david-dm.org/jctrvlr/twitchps)
+ [![Downloads](https://img.shields.io/npm/dm/twitchps.svg?style=flat)](https://www.npmjs.org/package/twitchps) [![Version](https://img.shields.io/npm/v/twitchps.svg?style=flat)](https://www.npmjs.org/package/twitchps)  [![GitHub issues](https://img.shields.io/github/issues/jctrvlr/twitchPS.svg)](https://github.com/jctrvlr/twitchPS/issues) [![Build Status](https://travis-ci.org/jctrvlr/twitchPS.svg?branch=master)](https://travis-ci.org/jctrvlr/twitchPS)
 
 Neat little [Node](http://nodejs.org) library which lets you easily interact with the Twitch.tv PubSub service.
 > TODO - Detailed documentation
