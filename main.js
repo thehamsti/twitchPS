@@ -46,8 +46,8 @@ class TwitchPS extends EventEmitter {
    */
   _connect(){
     this._ws = new WebSocket(this._url);
-    var self = this;
-    this._ws.on('open', function open() {
+    const self = this;
+    this._ws.on('open', () => {
       self.addTopic(self._init_topics, true);
       console.log('Connected');
     });
@@ -70,7 +70,7 @@ class TwitchPS extends EventEmitter {
      *       ERR_SERVER
      *       ERR_BADTOPIC
      */
-    this._ws.on('message', function inc(mess) {
+    this._ws.on('message', (mess) => {
       try {
         let message = JSON.parse(mess);
         self._sendDebug('_connect()', message);
@@ -99,7 +99,6 @@ class TwitchPS extends EventEmitter {
         } else if (message.type === 'MESSAGE') {
           if (typeof message.data.message === 'string') message.data.message = JSON.parse(message.data.message);
           let split = _.split(message.data.topic, '.', 2),
-              topic = split[0],
               channel = split[1];
           switch(message.data.topic.substr(0, message.data.topic.indexOf('.'))) {
             case 'channel-bits-events-v1':
@@ -126,7 +125,7 @@ class TwitchPS extends EventEmitter {
       }
     });
 
-    this._ws.on('close', function inc() {
+    this._ws.on('close', () => {
       self._sendDebug('In websocket close', '');
       if(self._recon) {
         setTimeout(() => {
@@ -156,10 +155,10 @@ class TwitchPS extends EventEmitter {
    *
    */
   _reconnect(){
-    var self = this;
+    const self = this;
     self._ws.terminate();
     self._sendDebug('_reconnect()', 'Websocket has been terminated');
-    setTimeout(function () {
+    setTimeout(() => {
       self._connect();
     }, 5000);
   }
@@ -342,7 +341,7 @@ class TwitchPS extends EventEmitter {
    */
   _sendDebug(origin, mess){
     if(this._debug) {
-      var d = new Date();
+      let d = new Date();
       console.log('TwitchPS -- ' + d.toLocaleString() + ' -- in ' + origin + ' -- ',  mess);
     }
   }
@@ -359,10 +358,9 @@ class TwitchPS extends EventEmitter {
           callback();
         }
         return;
-      } else {
-        this._sendDebug('_wait()', 'Waiting for connection');
-        this._wait(callback);
       }
+      this._sendDebug('_wait()', 'Waiting for connection');
+      this._wait(callback);
     }, 5);
   }
   /***** End Helper Functions *****/
@@ -384,7 +382,7 @@ class TwitchPS extends EventEmitter {
     return new Promise((resolve, reject) => {
 
       this._wait(() => {
-        for(var i = 0; i < topics.length; i++) {
+        for(let i = 0; i < topics.length; i += 1) {
           let top = topics[i].topic;
           let tok = topics[i].token;
           let nonce = shortid.generate();
@@ -432,13 +430,13 @@ class TwitchPS extends EventEmitter {
   removeTopic(topics){
     return new Promise((resolve, reject) => {
       this._wait(() => {
-        for(var i = 0; i < topics.length; i++) {
+        for(let i = 0; i < topics.length; i += 1) {
           let top = topics[i].topic;
           let nonce = shortid.generate();
 
           this._pending[nonce] = {
             resolve: () => {
-              let removeTopic = (t) => {
+              let removeTopic = () => {
                 delete this._topics[nonce];
               };
               topics.map(removeTopic);

@@ -12,7 +12,7 @@
   ],
   "main": "main.js",
   "scripts": {
-    "test": "mocha"
+    "test": "eslint \"**/*.js\""
   },
   "repository": {
     "type": "git",
@@ -24,11 +24,59 @@
     "url": "https://github.com/jctrvlr/twitchps/issues"
   },
   "homepage": "https://github.com/jctrvlr/twitchps#readme",
+  "eslintConfig": {
+    "env": {
+      "es6": true,
+      "node": true
+    },
+    "parserOptions": {
+      "ecmaVersion": 6
+    },
+    "extends": "eslint:recommended",
+    "rules": {
+      "semi": [
+        2,
+        "always",
+        {
+          "omitLastInOneLineBlock": true
+        }
+      ],
+      "no-unused-vars": [
+        2,
+        {
+          "argsIgnorePattern": "^_",
+          "caughtErrors": "none"
+        }
+      ],
+      "no-control-regex": 0,
+      "global-require": 1,
+      "camelcase": 0,
+      "no-console": 0,
+      "dot-notation": 1,
+      "no-else-return": 2,
+      "no-plusplus": 2,
+      "constructor-super": 2,
+      "prefer-arrow-callback": 1,
+      "object-shorthand": 2,
+      "object-curly-spacing": 1,
+      "object-property-newline": [
+        1,
+        {
+          "allowMultiplePropertiesPerLine": true
+        }
+      ],
+      "no-var": 2,
+      "no-inner-declarations": 0
+    }
+  },
   "dependencies": {
     "bluebird": "^3.5.0",
     "events": "^1.1.1",
     "lodash": "^4.17.4",
     "shortid": "^2.2.8",
     "ws": "^2.2.2"
+  },
+  "devDependencies": {
+    "eslint": "^3.19.0"
   }
 }
