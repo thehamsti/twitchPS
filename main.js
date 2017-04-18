@@ -4,18 +4,20 @@ let WebSocket = require('ws'),
     EventEmitter = require ('events'),
     _ = require('lodash');
 
+/**
+ * Connection to Twitch Pubsub System
+ */
 class TwitchPS extends EventEmitter {
   /**
    * Constructor
-   *
+   * @constructor
    * @param {Object} options - JSON object of required options
-   * @param {boolean} options.reconnect - True to try to reconnect, false to not
-   * @param {Object} options.init_topics - JSON Object array of initial topic
-   * @param {string} options.init_topics.topic - Topic to listen too
-   * @param {string} options.init_topics.token - Authentication token
-   * @param {boolean} options.debug - Turns debug logging on and off
-   * @param {string} options.url - URL of WS to connect too. DEFAULT: Twitch {"wss://pubsub-edge.twitch.tv"}
-   *
+   * @param {boolean} [options.reconnect=true] - True to try to reconnect, false to not
+   * @param {Object[]} options.init_topics - JSON Object array of initial topic
+   * @param {string} options.init_topics[].topic - Topic to listen too
+   * @param {string} options.init_topics[].token - Authentication token
+   * @param {boolean} [options.debug=false] - Turns debug console output on and off
+   * @param {string} [options.url='wss://pubsub-edge.twitch.tv'] - URL of WS to connect too. DEFAULT: Twitch {"wss://pubsub-edge.twitch.tv"}
    */
   constructor(options = {reconnect: true, init_topics: {}, debug: false, url: 'wss://pubsub-edge.twitch.tv'}) {
     super();
@@ -42,7 +44,6 @@ class TwitchPS extends EventEmitter {
 
   /**
    * Initial connection function -- Sets up connection, and websocket listeners
-   *
    */
   _connect(){
     this._ws = new WebSocket(this._url);
@@ -152,7 +153,6 @@ class TwitchPS extends EventEmitter {
 
   /**
    * Reconnect function - Terminates current websocket connection and reconnects
-   *
    */
   _reconnect(){
     const self = this;
@@ -189,7 +189,6 @@ class TwitchPS extends EventEmitter {
    *                     user_id - {string} - User ID of the person who used the bits
    *                     user_name - {string} - Login name of the person who used the bits
    *                     version - {string} - Message version
-   *
    */
   _onBits(message){
     // TODO ADD VERSION CHECK/EMIT
@@ -241,7 +240,6 @@ class TwitchPS extends EventEmitter {
    *                        recipient.badges - {Array} - Array of recipient badges
    *                     sent_ts - {integer} - Timestamp of when message was sent
    *                     nonce - {string} - Nonce associated with whisper message
-   *
    */
   _onWhisper(message){
     if (typeof message.data.message.tags === 'string') message.data.message.tags = JSON.parse(message.data.message.tags);
@@ -295,7 +293,6 @@ class TwitchPS extends EventEmitter {
    *                      time - {integer} - Server time. RFC 3339 format
    *                      channel_name - {string} - Channel name
    *                      viewers - {integer} - Number of viewers currently watching
-   *
    */
   _onVideoPlayback(message, channel){
     if(message.data.message.type === 'stream-up') {
@@ -348,7 +345,6 @@ class TwitchPS extends EventEmitter {
 
   /**
    * Wait for websocket
-   *
    */
   _wait(callback) {
     setTimeout(() => {
@@ -371,7 +367,6 @@ class TwitchPS extends EventEmitter {
 
   /**
    * Add new topics to listen too
-   *
    * @param {Object} topics - JSON Object array of topic(s)
    * @param {string} topics[].topic - Topic to listen too
    * @param {string} [token=Default Token] topics[].token - Authentication token
