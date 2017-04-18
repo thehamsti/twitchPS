@@ -37,8 +37,9 @@ const TwitchPS = require('twitchps');
 
 // Initial topics are required
 let init_topics = [{topic: 'video-playback.bajheera'}, {topic: 'whispers.44322889', token: 'nkuaf7ur3trg7ju37md1y3u5p52s3q'}];
-//Optional reconnect, debug options (Defaults: reconnect: true, debug: false)
-var ps = new TwitchPS({init_topics: init_topics});
+// Optional reconnect, debug options (Defaults: reconnect: true, debug: false)
+// var ps = new TwitchPS({init_topics: init_topics});
+var ps = new TwitchPS({init_topics: init_topics, reconnect: false, debug: true});
 ~~~
 > Token changed for security reasons. You can generate a token [here](https://twitchapps.com/tmi/).
 > <br>In order to find the userID/channelID follow the instructions [here](https://dev.twitch.tv/docs/v5/guides/using-the-twitch-api/#translating-from-user-names-to-user-ids).
