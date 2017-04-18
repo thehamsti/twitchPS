@@ -53,6 +53,12 @@ ps.addTopic([{topic: 'whispers.38290946', token: 'nkuaf7ur3trg7ju37md1y3u5p52s3q
 ~~~
 > Token changed for security reasons.
 
+#### Un-listen (remove) to existing topics
+~~~ javascript
+ps.removeTopic([{topic: "video-playback.starladder_cs_en"}]);
+~~~
+> Token not required.
+
 ## Community
 - Follow [@itsjackc_](https://twitter.com/itsjackc_) on Twitter
 - Have a question that is not a bug report? - Tweet me [@itsjackc_](https://twitter.com/itsjackc_)
