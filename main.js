@@ -105,6 +105,9 @@ class TwitchPS extends EventEmitter {
             case 'channel-bits-events-v1':
               self._onBits(message);
               break;
+            case 'channel-subscribe-events-v1':
+              self._onSub(message);
+              break;
             case 'whispers':
               self._onWhisper(message);
               break;
@@ -204,6 +207,50 @@ class TwitchPS extends EventEmitter {
       "user_id" : message.data.message.data.user_id,
       "user_name" : message.data.message.data.user_name,
       "version" : message.data.message.data.version
+    });
+
+  }
+
+  /**
+   * Handles Subscription Message
+   * @param message - {object} - Message object received from pubsub-edge
+   * @param message.type - {string} - Type of message - Will always be 'MESSAGE' - Handled by _connect()
+   * @param message.data - {JSON} - JSON wrapper of topic/message fields
+   * @param message.data.topic - {string} - Topic that message pertains too - Will always be 'channel-subscribe-events-v1.<CHANNEL_ID>' - Handled by _connect()
+   * @param message.data.message - {JSON} - Parsed into JSON in _connect() - Originally received as string from Twitch
+   * @emits bits - {event} -
+   *         JSON object -
+   *                     user_name - {string} - Username of subscriber
+   *                     display_name - {string} - Display name of subscriber
+   *                     channel_name - {string} - Name of the channel subscribed too
+   *                     user_id - {string} - UserID of subscriber
+   *                     channel_id - {string} - Channel ID of channel subscribed too
+   *                     time - {string} - Time of subscription event RFC 3339 format
+   *                     sub_plan - {string} - Type of sub plan (ie. Prime, 1000, 2000, 3000)
+   *                     sub_plan_name - {string} - Name of subscription plan
+   *                     months - {integer} - Months subscribed to channel
+   *                     context - {string} - Context of sub -- (ie. sub, resub)
+   *                     sub_message - {object} - Object containing message
+   *                     sub_message.message - {string} - Message sent in chat on resub
+   *                     sub_message.emotes - {array} - Array of emotes
+   */
+  _onSub(message){
+    // TODO ADD VERSION CHECK/EMIT
+    this.emit('subscribe', {
+      "user_name" : message.data.message.user_name,
+      "display_name" : message.data.message.display_name,
+      "channel_name" : message.data.message.channel_name,
+      "user_id" : message.data.message.user_id,
+      "channel_id" : message.data.message.channel_id,
+      "time" : message.data.message.time,
+      "sub_plan" : message.data.message.sub_plan,
+      "sub_plan_name" : message.data.message.sub_plan_name,
+      "months" : message.data.message.data.months,
+      "context" : message.data.message.context,
+      "sub_message" : {
+        "message" : message.data.message.sub_message.message,
+        "emotes": message.data.message.sub_message.emotes
+      }
     });
 
   }
