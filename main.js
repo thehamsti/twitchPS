@@ -176,7 +176,6 @@ class TwitchPS extends EventEmitter {
    * @param message.data.message - {JSON} - Parsed into JSON in _connect() - Originally received as string from Twitch
    * @emits bits - {event} -
    *         JSON object -
-   *                     badge_entitlement - {object} - Information about the user’s new badge level, if the user reached a new badge level with this cheer; otherwise. null.
    *                     bits_used - {integer} - Number of bits used
    *                     channel_id - {string} - User ID of the channel on which bits were used
    *                     channel_name - {string} - Name of the channel on which bits were used
@@ -193,10 +192,6 @@ class TwitchPS extends EventEmitter {
   _onBits(message){
     // TODO ADD VERSION CHECK/EMIT
     this.emit('bits', {
-      "badge_entitlement" : {
-        "old_badge": message.data.message.data.badge_entitlement.previous_version,
-        "new_badge": message.data.message.data.badge_entitlement.new_version
-      },
       "bits_used" : message.data.message.data.bits_used,
       "channel_id" : message.data.message.data.channel_id,
       "channel_name" : message.data.message.data.channel_name,
@@ -220,7 +215,7 @@ class TwitchPS extends EventEmitter {
    * @param message.data - {JSON} - JSON wrapper of topic/message fields
    * @param message.data.topic - {string} - Topic that message pertains too - Will always be 'whispers.<CHANNEL_ID>' - Handled by _connect()
    * @param message.data.message - {JSON} - Parsed into JSON in _connect() - Originally received as string from Twitch
-   * @emits whisper - {event} -
+   * @emits whisper_sent, whisper_received - {event} -
    *          JSON object -
    *                     id - {integer} - Message ID
    *                     body - {string} - Body of message sent
@@ -244,30 +239,61 @@ class TwitchPS extends EventEmitter {
   _onWhisper(message){
     if (typeof message.data.message.tags === 'string') message.data.message.tags = JSON.parse(message.data.message.tags);
     if (typeof message.data.message.recipient === 'string') message.data.message.recipient = JSON.parse(message.data.message.recipient);
-    // TODO Emit different events for different Message types -- whisper_received, whisper_sent, thread, --- Emit all data received
-    this.emit('whisper', {
-      id: message.data.message.data_object.id,
-      body: message.data.message.data_object.body,
-      thread_id: message.data.message.data_object.thread_id,
-      sender: {
-        id: message.data.message.data.from_id,
-        username: message.data.message.data_object.tags.login,
-        display_name: message.data.message.data_object.tags.display_name,
-        color: message.data.message.data_object.tags.color,
-        badges: message.data.message.data_object.tags.badges,
-        emotes: message.data.message.data_object.tags.emotes
-      },
-      recipient: {
-        id: message.data.message.data_object.recipient.id,
-        username: message.data.message.data_object.recipient.username,
-        display_name: message.data.message.data_object.recipient.display_name,
-        color: message.data.message.data_object.recipient.color,
-        badges: message.data.message.data_object.recipient.badges
-      },
-      sent_ts: message.data.message.data_object.sent_ts,
-      nonce: message.data.message.data_object.nonce
-    });
-
+    switch(message.data.message.type) {
+      case 'whisper_sent':
+        this.emit('whisper_sent', {
+          id: message.data.message.data_object.id,
+          body: message.data.message.data_object.body,
+          thread_id: message.data.message.data_object.thread_id,
+          sender: {
+            id: message.data.message.data.from_id,
+            username: message.data.message.data_object.tags.login,
+            display_name: message.data.message.data_object.tags.display_name,
+            color: message.data.message.data_object.tags.color,
+            badges: message.data.message.data_object.tags.badges,
+            emotes: message.data.message.data_object.tags.emotes
+          },
+          recipient: {
+            id: message.data.message.data_object.recipient.id,
+            username: message.data.message.data_object.recipient.username,
+            display_name: message.data.message.data_object.recipient.display_name,
+            color: message.data.message.data_object.recipient.color,
+            badges: message.data.message.data_object.recipient.badges
+          },
+          sent_ts: message.data.message.data_object.sent_ts,
+          nonce: message.data.message.data_object.nonce
+        });
+        break;
+      case 'whisper_received':
+        this.emit('whisper_received', {
+          id: message.data.message.data_object.id,
+          body: message.data.message.data_object.body,
+          thread_id: message.data.message.data_object.thread_id,
+          sender: {
+            id: message.data.message.data.from_id,
+            username: message.data.message.data_object.tags.login,
+            display_name: message.data.message.data_object.tags.display_name,
+            color: message.data.message.data_object.tags.color,
+            badges: message.data.message.data_object.tags.badges,
+            emotes: message.data.message.data_object.tags.emotes
+          },
+          recipient: {
+            id: message.data.message.data_object.recipient.id,
+            username: message.data.message.data_object.recipient.username,
+            display_name: message.data.message.data_object.recipient.display_name,
+            color: message.data.message.data_object.recipient.color,
+            badges: message.data.message.data_object.recipient.badges
+          },
+          sent_ts: message.data.message.data_object.sent_ts,
+          nonce: message.data.message.data_object.nonce
+        });
+        break;
+      case 'thread':
+        this.emit('thread', {
+          thread_id: message.data.message.data_object.thread_id
+        });
+        break;
+    }
   }
 
   /**
