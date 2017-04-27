@@ -131,7 +131,9 @@ class TwitchPS extends EventEmitter {
 
     this._ws.on('close', () => {
       self._sendDebug('In websocket close', '');
+      self.emit('disconnected');
       if(self._recon) {
+        self.emit('reconnect');
         setTimeout(() => {
           self._ws = new WebSocket(self._url);
         }, 1000 * self._tries);
@@ -141,7 +143,6 @@ class TwitchPS extends EventEmitter {
       clearInterval(self._interval);
       self._timeout = null;
       self._interval = null;
-      self.emit('disconnected');
     });
 
     self._interval = setInterval(() => {
@@ -160,7 +161,7 @@ class TwitchPS extends EventEmitter {
     const self = this;
     self._ws.terminate();
     self._sendDebug('_reconnect()', 'Websocket has been terminated');
-    self.emit('reconnecting');
+    self.emit('reconnect');
     setTimeout(() => {
       self._connect();
     }, 5000);
