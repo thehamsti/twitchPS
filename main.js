@@ -50,7 +50,7 @@ class TwitchPS extends EventEmitter {
     const self = this;
     this._ws.on('open', () => {
       self.addTopic(self._init_topics, true);
-      console.log('Connected');
+      self.emit('connected');
     });
     /**
      * MSG TYPES HANDLED:
@@ -141,8 +141,7 @@ class TwitchPS extends EventEmitter {
       clearInterval(self._interval);
       self._timeout = null;
       self._interval = null;
-
-
+      self.emit('disconnected');
     });
 
     self._interval = setInterval(() => {
@@ -161,6 +160,7 @@ class TwitchPS extends EventEmitter {
     const self = this;
     self._ws.terminate();
     self._sendDebug('_reconnect()', 'Websocket has been terminated');
+    self.emit('reconnecting');
     setTimeout(() => {
       self._connect();
     }, 5000);
