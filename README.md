@@ -55,7 +55,7 @@ ps.on('stream-up', (data) => {
 |  Event Name    | You are notified when …                      |
 |:--------------:|:--------------------------------------------:|
 | 'connected'    | A successful connection has been established |
-| 'disconnected' | The connection has been termintated          |
+| 'disconnected' | The connection has been terminated           |
 | 'reconnect'    | An attempt will be made to reconnect         |
 
 #### Events emitted after subscribing/adding topics
