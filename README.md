@@ -51,6 +51,13 @@ ps.on('stream-up', (data) => {
 > <br>In order to find the userID/channelID follow the instructions [here](https://dev.twitch.tv/docs/v5/guides/using-the-twitch-api/#translating-from-user-names-to-user-ids).
 > <br>For more detailed usage see [example application](https://github.com/jctrvlr/twitchps_example).
 
+#### Connection Events
+|  Event Name    | You are notified when …                      |
+|:--------------:|:--------------------------------------------:|
+| 'connected'    | A successful connection has been established |
+| 'disconnected' | The connection has been terminated           |
+| 'reconnect'    | An attempt will be made to reconnect         |
+
 #### Events emitted after subscribing/adding topics
 
 |              Event Name             |                                                                                                                                                                                                                      List of fields                                                                                                                                                                                                                      |
