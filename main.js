@@ -74,6 +74,8 @@ class TwitchPS extends EventEmitter {
     this._ws.on('message', (mess) => {
       try {
         let message = JSON.parse(mess);
+        // Emit 'raw' event on every message received 
+        self.emit('raw', message);
         self._sendDebug('_connect()', message);
 
         if(message.type === 'RESPONSE') {
