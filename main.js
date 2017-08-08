@@ -408,6 +408,7 @@ class TwitchPS extends EventEmitter {
    *                      target_user_id - {string} - The banee's user ID
    *                      created_by - {string} - The banear's username
    *                      created_by_user_id - {string} - The banear's user ID
+   *                      reason - {string} - The reason provided by the banear - Null if no reason was given
    *          unban -
    *            JSON object -
    *                      target - {string} - The banee's username
@@ -416,13 +417,22 @@ class TwitchPS extends EventEmitter {
    *                      created_by_user_id - {string} - The banear's user ID
    */
   _onModeratorAction(message) {
-    // message.data.message.data.moderation_action = 'ban' || 'unban'
-    this.emit(message.data.message.data.moderation_action, {
-      target: message.data.message.data.args[0],
-      target_user_id: message.data.message.data.target_user_id,
-      created_by: message.data.message.data.created_by,
-      created_by_user_id: message.data.message.data.created_by_user_id,
-    });
+    if (message.data.message.data.moderation_action === 'ban') {
+      this.emit(message.data.message.data.moderation_action, {
+        target: message.data.message.data.args[0],
+        target_user_id: message.data.message.data.target_user_id,
+        created_by: message.data.message.data.created_by,
+        created_by_user_id: message.data.message.data.created_by_user_id,
+        reason: message.data.message.data.args[1] || null,
+      });
+    } else if (message.data.message.data.moderation_action === 'unban') {
+      this.emit(message.data.message.data.moderation_action, {
+        target: message.data.message.data.args[0],
+        target_user_id: message.data.message.data.target_user_id,
+        created_by: message.data.message.data.created_by,
+        created_by_user_id: message.data.message.data.created_by_user_id,
+      });
+    }
   }
 
   /***** End Message Handler Functions *****/
