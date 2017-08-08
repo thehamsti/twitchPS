@@ -116,6 +116,9 @@ class TwitchPS extends EventEmitter {
             case 'video-playback':
               self._onVideoPlayback(message, channel);
               break;
+            case 'chat_moderator_actions':
+              self._onModeratorAction(message);
+              break;
           }
         } else if (message.type === 'RECONNECT') {
           self._reconnect();
@@ -389,6 +392,37 @@ class TwitchPS extends EventEmitter {
         viewers: message.data.message.viewers
       });
     }
+  }
+
+  /**
+   * Handles Moderator Actions (Ban/Unban)
+   * @param message - {object} - Message object received from pubsub-edge
+   * @param message.type - {string} - Type of message - Will always be 'MESSAGE' - Handled by _connect()
+   * @param message.data - {JSON} - JSON wrapper of topic/message fields
+   * @param message.data.topic - {string} - Topic that message pertains too - Will always be 'chat_moderator_actions.<USER_ID><ROOM_ID>' - Handled by _connect()
+   * @param message.data.message - {JSON} - Parsed into JSON in _connect() - Originally received as string from Twitch
+   * @emits ban, unban
+   *          ban -
+   *            JSON object -
+   *                      target - {string} - The banee's username
+   *                      target_user_id - {string} - The banee's user ID
+   *                      created_by - {string} - The banear's username
+   *                      created_by_user_id - {string} - The banear's user ID
+   *          unban -
+   *            JSON object -
+   *                      target - {string} - The banee's username
+   *                      target_user_id - {string} - The banee's user ID
+   *                      created_by - {string} - The banear's username
+   *                      created_by_user_id - {string} - The banear's user ID
+   */
+  _onModeratorAction(message) {
+    // message.data.message.data.moderation_action = 'ban' || 'unban'
+    this.emit(message.data.message.data.moderation_action, {
+      target: message.data.message.data.args[0],
+      target_user_id: message.data.message.data.target_user_id,
+      created_by: message.data.message.data.created_by,
+      created_by_user_id: message.data.message.data.created_by_user_id,
+    });
   }
 
   /***** End Message Handler Functions *****/
