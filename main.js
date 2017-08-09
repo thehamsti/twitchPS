@@ -299,7 +299,7 @@ class TwitchPS extends EventEmitter {
           body: message.data.message.data_object.body,
           thread_id: message.data.message.data_object.thread_id,
           sender: {
-            id: message.data.message.data.from_id,
+            id: message.data.message.data_object.from_id,
             username: message.data.message.data_object.tags.login,
             display_name: message.data.message.data_object.tags.display_name,
             color: message.data.message.data_object.tags.color,
@@ -323,7 +323,7 @@ class TwitchPS extends EventEmitter {
           body: message.data.message.data_object.body,
           thread_id: message.data.message.data_object.thread_id,
           sender: {
-            id: message.data.message.data.from_id,
+            id: message.data.message.data_object.from_id,
             username: message.data.message.data_object.tags.login,
             display_name: message.data.message.data_object.tags.display_name,
             color: message.data.message.data_object.tags.color,
