@@ -49,8 +49,13 @@ class TwitchPS extends EventEmitter {
     this._ws = new WebSocket(this._url);
     const self = this;
     this._ws.on('open', () => {
-      self.addTopic(self._init_topics, true);
-      self.emit('connected');
+      self.addTopic(self._init_topics, true)
+        .catch((err) => {
+          self.emit('disconnected');
+        })
+        .then(() => {
+          self.emit('connected');
+        })
     });
     /**
      * MSG TYPES HANDLED:
