@@ -4,6 +4,8 @@
 
 Neat little [Node](http://nodejs.org) library which lets you easily interact with the Twitch.tv PubSub service.
 
+*CAUTION* Not updated since Twitch changed API. Broken at the moment. Will fix in near future.
+
  #### Supported Topics
 
 |  Feature | Topic and Example | Required Scope  |  You are notified when …         |  
