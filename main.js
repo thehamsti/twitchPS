@@ -395,13 +395,13 @@ class TwitchPS extends EventEmitter {
   }
 
   /**
-   * Handles Moderator Actions (Ban/Unban)
+   * Handles Moderator Actions (Ban/Unban/Timeout)
    * @param message - {object} - Message object received from pubsub-edge
    * @param message.type - {string} - Type of message - Will always be 'MESSAGE' - Handled by _connect()
    * @param message.data - {JSON} - JSON wrapper of topic/message fields
    * @param message.data.topic - {string} - Topic that message pertains too - Will always be 'chat_moderator_actions.<USER_ID><ROOM_ID>' - Handled by _connect()
    * @param message.data.message - {JSON} - Parsed into JSON in _connect() - Originally received as string from Twitch
-   * @emits ban, unban
+   * @emits ban, unban, timeout
    *          ban -
    *            JSON object -
    *                      target - {string} - The banee's username
@@ -415,6 +415,13 @@ class TwitchPS extends EventEmitter {
    *                      target_user_id - {string} - The banee's user ID
    *                      created_by - {string} - The banear's username
    *                      created_by_user_id - {string} - The banear's user ID
+   *          timeout -
+   *            JSON object -
+   *                      target - {string} - The timeout-ee's username
+   *                      target_user_id - {string} - The timeout-ee's user ID
+   *                      created_by - {string} - The timeout-ear's username
+   *                      created_by_user_id - {string} - The timeout-ear's user ID
+   *                      duration - {string} - The timeout duration in seconds
    */
   _onModeratorAction(message) {
     if (message.data.message.data.moderation_action === 'ban') {
@@ -431,6 +438,14 @@ class TwitchPS extends EventEmitter {
         target_user_id: message.data.message.data.target_user_id,
         created_by: message.data.message.data.created_by,
         created_by_user_id: message.data.message.data.created_by_user_id,
+      });
+    } else if (message.data.message.data.moderation_action === 'timeout') {
+      this.emit(message.data.message.data.moderation_action, {
+        target: message.data.message.data.args[0],
+        target_user_id: message.data.message.data.target_user_id,
+        created_by: message.data.message.data.created_by,
+        created_by_user_id: message.data.message.data.created_by_user_id,
+        duration: message.data.message.data.args[1],
       });
     }
   }
