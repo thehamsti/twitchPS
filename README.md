@@ -4,6 +4,8 @@
 
 Neat little [Node](http://nodejs.org) library which lets you easily interact with the Twitch.tv PubSub service.
 
+*CAUTION* Not updated since Twitch changed API. Broken at the moment. Will fix in near future.
+
  #### Supported Topics
 
 |  Feature | Topic and Example | Required Scope  |  You are notified when …         |  
@@ -12,6 +14,7 @@ Neat little [Node](http://nodejs.org) library which lets you easily interact wit
 | Channel Subscriptions  | ```channel-subscribe-events-v1.<channel ID> ``` <br><br> Example: ``` channel-subscribe-events-v1.44322889 ```| ```channel_subscriptions```  | Anyone subscribes (first month) or resubscribes (subsequent months) to a channel.  |   
 | Whispers  |  ```whispers.<user ID> ``` <br><br> Example: ``` whispers.44322889 ```  | ```chat_login```  | Anyone whispers the specified user.  |   
 | Stream Status  |   ```video-playback.<channel name> ``` <br><br> Example: ``` video-playback.summit1g ``` |  No scope needed |  Status on stream going up, down, and viewer count. **Not officially supported by Twitch**|
+| Moderator Action  |   ```chat_moderator_actions.<user_id_of_moderator>.<room_id> ``` <br><br> Example: ``` video-playback.summit1g ``` |  Any scope |  Sends event when moderator you are listening too bans, or unbans chat user. **Not officially supported by Twitch**|
 
 ## Installation
 
