@@ -424,29 +424,41 @@ class TwitchPS extends EventEmitter {
    *                      duration - {string} - The timeout duration in seconds
    */
   _onModeratorAction(message) {
-    if (message.data.message.data.moderation_action === 'ban') {
-      this.emit(message.data.message.data.moderation_action, {
-        target: message.data.message.data.args[0],
-        target_user_id: message.data.message.data.target_user_id,
-        created_by: message.data.message.data.created_by,
-        created_by_user_id: message.data.message.data.created_by_user_id,
-        reason: message.data.message.data.args[1] || null,
-      });
-    } else if (message.data.message.data.moderation_action === 'unban') {
-      this.emit(message.data.message.data.moderation_action, {
-        target: message.data.message.data.args[0],
-        target_user_id: message.data.message.data.target_user_id,
-        created_by: message.data.message.data.created_by,
-        created_by_user_id: message.data.message.data.created_by_user_id,
-      });
-    } else if (message.data.message.data.moderation_action === 'timeout') {
-      this.emit(message.data.message.data.moderation_action, {
-        target: message.data.message.data.args[0],
-        target_user_id: message.data.message.data.target_user_id,
-        created_by: message.data.message.data.created_by,
-        created_by_user_id: message.data.message.data.created_by_user_id,
-        duration: message.data.message.data.args[1],
-      });
+    switch(message.data.message.data.moderation_action) {
+      case 'ban':
+        this.emit('ban', {
+          target: message.data.message.data.args[0],
+          target_user_id: message.data.message.data.target_user_id,
+          created_by: message.data.message.data.created_by,
+          created_by_user_id: message.data.message.data.created_by_user_id,
+          reason: message.data.message.data.args[1] || null,
+        });
+        break;
+      case 'unban':
+        this.emit('unban', {
+          target: message.data.message.data.args[0],
+          target_user_id: message.data.message.data.target_user_id,
+          created_by: message.data.message.data.created_by,
+          created_by_user_id: message.data.message.data.created_by_user_id,
+        });
+        break;
+      case 'timeout':
+        this.emit('timeout', {
+          target: message.data.message.data.args[0],
+          target_user_id: message.data.message.data.target_user_id,
+          created_by: message.data.message.data.created_by,
+          created_by_user_id: message.data.message.data.created_by_user_id,
+          duration: message.data.message.data.args[1],
+        });
+        break;
+      case 'clear':
+        this.emit('clear', {
+          created_by: message.data.message.data.created_by,
+          created_by_user_id: message.data.message.data.created_by_user_id,
+        });
+        break;
+      default:
+        // Do Nothing
     }
   }
 
