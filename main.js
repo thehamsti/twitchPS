@@ -395,13 +395,13 @@ class TwitchPS extends EventEmitter {
   }
 
   /**
-   * Handles Moderator Actions (Ban/Unban/Timeout)
+   * Handles Moderator Actions (Ban/Unban/Timeout/Clear)
    * @param message - {object} - Message object received from pubsub-edge
    * @param message.type - {string} - Type of message - Will always be 'MESSAGE' - Handled by _connect()
    * @param message.data - {JSON} - JSON wrapper of topic/message fields
    * @param message.data.topic - {string} - Topic that message pertains too - Will always be 'chat_moderator_actions.<USER_ID><ROOM_ID>' - Handled by _connect()
    * @param message.data.message - {JSON} - Parsed into JSON in _connect() - Originally received as string from Twitch
-   * @emits ban, unban, timeout
+   * @emits ban, unban, timeout, clear
    *          ban -
    *            JSON object -
    *                      target - {string} - The banee's username
@@ -422,6 +422,10 @@ class TwitchPS extends EventEmitter {
    *                      created_by - {string} - The timeout-ear's username
    *                      created_by_user_id - {string} - The timeout-ear's user ID
    *                      duration - {string} - The timeout duration in seconds
+   *          clear -
+   *            JSON object -
+   *                      created_by - {string} - The username of who cleared the chat
+   *                      created_by_user_id - {string} - The user ID of who cleared the chat
    */
   _onModeratorAction(message) {
     switch(message.data.message.data.moderation_action) {
