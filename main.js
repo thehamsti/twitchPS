@@ -235,6 +235,7 @@ class TwitchPS extends EventEmitter {
    *                     sub_plan - {string} - Type of sub plan (ie. Prime, 1000, 2000, 3000)
    *                     sub_plan_name - {string} - Name of subscription plan
    *                     months - {integer} - Months subscribed to channel
+   *                     cumulative_months - {integer} - Cumulative months subscribed to channel
    *                     context - {string} - Context of sub -- (ie. sub, resub)
    *                     sub_message - {object} - Object containing message
    *                     sub_message.message - {string} - Message sent in chat on resub
@@ -252,6 +253,7 @@ class TwitchPS extends EventEmitter {
       "sub_plan" : message.data.message.sub_plan,
       "sub_plan_name" : message.data.message.sub_plan_name,
       "months" : message.data.message.months,
+      "cumulative_months": message.data.message.cumulative_months,
       "context" : message.data.message.context,
       "sub_message" : {
         "message" : message.data.message.sub_message.message,
