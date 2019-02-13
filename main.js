@@ -236,10 +236,13 @@ class TwitchPS extends EventEmitter {
    *                     sub_plan_name - {string} - Name of subscription plan
    *                     months - {integer} - Months subscribed to channel
    *                     cumulative_months - {integer} - Cumulative months subscribed to channel
-   *                     context - {string} - Context of sub -- (ie. sub, resub)
+   *                     context - {string} - Context of sub -- (ie. sub, resub, giftsub)
    *                     sub_message - {object} - Object containing message
    *                     sub_message.message - {string} - Message sent in chat on resub
    *                     sub_message.emotes - {array} - Array of emotes
+   *                     recipient_id - {integer} - Gift recipient's UserID
+   *                     recipient_user_name - {string} - Gift recipient's username
+   *                     recipient_display_name - {string} - Gift recipient's display name
    */
   _onSub(message){
     // TODO ADD VERSION CHECK/EMIT
@@ -258,7 +261,10 @@ class TwitchPS extends EventEmitter {
       "sub_message" : {
         "message" : message.data.message.sub_message.message,
         "emotes": message.data.message.sub_message.emotes
-      }
+      },
+      "recipient_id": message.data.message.recipient_id,
+      "recipient_user_name": message.data.message.recipient_user_name,
+      "recipient_display_name": message.data.message.recipient_display_name
     });
 
   }
