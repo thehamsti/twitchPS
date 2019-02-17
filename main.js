@@ -1,8 +1,6 @@
 let WebSocket = require('ws'),
-    shortid = require('shortid'),
-    Promise = require('bluebird'),
-    EventEmitter = require ('events'),
-    _ = require('lodash');
+  shortid = require('shortid'),
+  EventEmitter = require('events');
 
 /**
  * Connection to Twitch Pubsub System
@@ -19,9 +17,14 @@ class TwitchPS extends EventEmitter {
    * @param {boolean} [options.debug=false] - Turns debug console output on and off
    * @param {string} [options.url='wss://pubsub-edge.twitch.tv'] - URL of WS to connect too. DEFAULT: Twitch {"wss://pubsub-edge.twitch.tv"}
    */
-  constructor(options = {reconnect: true, init_topics: {}, debug: false, url: 'wss://pubsub-edge.twitch.tv'}) {
+  constructor(options = {
+    reconnect: true,
+    init_topics: {},
+    debug: false,
+    url: 'wss://pubsub-edge.twitch.tv'
+  }) {
     super();
-    if(_.isEmpty(options.init_topics)) throw new Error('Missing initial topics');
+    if (Object.prototype.toString.call(options.init_topics) != '[object Array]' || options.init_topics.length == 0) throw new Error('Missing initial topics');
     this._recon = options.reconnect;
     this._debug = options.debug;
     this._url = (options.url) ? options.url : 'wss://pubsub-edge.twitch.tv';
@@ -45,7 +48,7 @@ class TwitchPS extends EventEmitter {
   /**
    * Initial connection function -- Sets up connection, and websocket listeners
    */
-  _connect(){
+  _connect() {
     this._ws = new WebSocket(this._url);
     const self = this;
     this._ws.on('open', () => {
@@ -78,8 +81,8 @@ class TwitchPS extends EventEmitter {
         self.emit('raw', message);
         self._sendDebug('_connect()', message);
 
-        if(message.type === 'RESPONSE') {
-          if(message.nonce === self._init_nonce) {
+        if (message.type === 'RESPONSE') {
+          if (message.nonce === self._init_nonce) {
             self._init_nonce = null;
             if (message.error !== "") {
               self._pending[message.nonce].reject(message.error);
@@ -88,8 +91,8 @@ class TwitchPS extends EventEmitter {
               self._pending[message.nonce].resolve();
             }
           } else {
-            if(self._pending[message.nonce]) {
-              if (message.error !== ""){
+            if (self._pending[message.nonce]) {
+              if (message.error !== "") {
                 self._pending[message.nonce].reject(message.error);
               } else {
                 self._pending[message.nonce].resolve();
@@ -101,9 +104,9 @@ class TwitchPS extends EventEmitter {
 
         } else if (message.type === 'MESSAGE') {
           if (typeof message.data.message === 'string') message.data.message = JSON.parse(message.data.message);
-          let split = _.split(message.data.topic, '.', 2),
-              channel = split[1];
-          switch(message.data.topic.substr(0, message.data.topic.indexOf('.'))) {
+          let split = message.data.topic.split('.'),
+            channel = split[1];
+          switch (message.data.topic.substr(0, message.data.topic.indexOf('.'))) {
             case 'channel-bits-events-v1':
               self._onBits(message);
               break;
@@ -137,7 +140,7 @@ class TwitchPS extends EventEmitter {
     this._ws.on('close', () => {
       self._sendDebug('In websocket close', '');
       self.emit('disconnected');
-      if(self._recon) {
+      if (self._recon) {
         self.emit('reconnect');
         setTimeout(() => {
           self._ws = new WebSocket(self._url);
@@ -151,8 +154,10 @@ class TwitchPS extends EventEmitter {
     });
 
     self._interval = setInterval(() => {
-      if(self._ws.readyState === 1) {
-        self._ws.send(JSON.stringify({type: 'PING'}));
+      if (self._ws.readyState === 1) {
+        self._ws.send(JSON.stringify({
+          type: 'PING'
+        }));
         self._sendDebug('In setInterval', 'Sent ping');
         self._timeout = setTimeout(() => self._reconnect(), 15000);
       }
@@ -162,7 +167,7 @@ class TwitchPS extends EventEmitter {
   /**
    * Reconnect function - Terminates current websocket connection and reconnects
    */
-  _reconnect(){
+  _reconnect() {
     const self = this;
     self._ws.terminate();
     self._sendDebug('_reconnect()', 'Websocket has been terminated');
@@ -198,21 +203,21 @@ class TwitchPS extends EventEmitter {
    *                     user_name - {string} - Login name of the person who used the bits
    *                     version - {string} - Message version
    */
-  _onBits(message){
+  _onBits(message) {
     // TODO ADD VERSION CHECK/EMIT
     this.emit('bits', {
-      "bits_used" : message.data.message.data.bits_used,
-      "channel_id" : message.data.message.data.channel_id,
-      "channel_name" : message.data.message.data.channel_name,
-      "chat_message" : message.data.message.data.chat_message,
-      "context" : message.data.message.data.context,
-      "message_id" : message.data.message.data.message_id,
-      "message_type" : message.data.message.data.message_type,
-      "time" : message.data.message.data.time,
-      "total_bits_used" : message.data.message.data.total_bits_used,
-      "user_id" : message.data.message.data.user_id,
-      "user_name" : message.data.message.data.user_name,
-      "version" : message.data.message.data.version
+      "bits_used": message.data.message.data.bits_used,
+      "channel_id": message.data.message.data.channel_id,
+      "channel_name": message.data.message.data.channel_name,
+      "chat_message": message.data.message.data.chat_message,
+      "context": message.data.message.data.context,
+      "message_id": message.data.message.data.message_id,
+      "message_type": message.data.message.data.message_type,
+      "time": message.data.message.data.time,
+      "total_bits_used": message.data.message.data.total_bits_used,
+      "user_id": message.data.message.data.user_id,
+      "user_name": message.data.message.data.user_name,
+      "version": message.data.message.data.version
     });
 
   }
@@ -241,24 +246,27 @@ class TwitchPS extends EventEmitter {
    *                     sub_message.message - {string} - Message sent in chat on resub
    *                     sub_message.emotes - {array} - Array of emotes
    */
-  _onSub(message){
+  _onSub(message) {
     // TODO ADD VERSION CHECK/EMIT
     this.emit('subscribe', {
-      "user_name" : message.data.message.user_name,
-      "display_name" : message.data.message.display_name,
-      "channel_name" : message.data.message.channel_name,
-      "user_id" : message.data.message.user_id,
-      "channel_id" : message.data.message.channel_id,
-      "time" : message.data.message.time,
-      "sub_plan" : message.data.message.sub_plan,
-      "sub_plan_name" : message.data.message.sub_plan_name,
-      "months" : message.data.message.months,
+      "user_name": message.data.message.user_name,
+      "display_name": message.data.message.display_name,
+      "channel_name": message.data.message.channel_name,
+      "user_id": message.data.message.user_id,
+      "channel_id": message.data.message.channel_id,
+      "time": message.data.message.time,
+      "sub_plan": message.data.message.sub_plan,
+      "sub_plan_name": message.data.message.sub_plan_name,
+      "months": message.data.message.months,
       "cumulative_months": message.data.message.cumulative_months,
-      "context" : message.data.message.context,
-      "sub_message" : {
-        "message" : message.data.message.sub_message.message,
+      "context": message.data.message.context,
+      "sub_message": {
+        "message": message.data.message.sub_message.message,
         "emotes": message.data.message.sub_message.emotes
-      }
+      },
+      "recipient_id": message.data.message.recipient_id,
+      "recipient_user_name": message.data.message.recipient_user_name,
+      "recipient_display_name": message.data.message.recipient_display_name
     });
 
   }
@@ -291,10 +299,10 @@ class TwitchPS extends EventEmitter {
    *                     sent_ts - {integer} - Timestamp of when message was sent
    *                     nonce - {string} - Nonce associated with whisper message
    */
-  _onWhisper(message){
+  _onWhisper(message) {
     if (typeof message.data.message.tags === 'string') message.data.message.tags = JSON.parse(message.data.message.tags);
     if (typeof message.data.message.recipient === 'string') message.data.message.recipient = JSON.parse(message.data.message.recipient);
-    switch(message.data.message.type) {
+    switch (message.data.message.type) {
       case 'whisper_sent':
         this.emit('whisper_sent', {
           id: message.data.message.data_object.id,
@@ -375,8 +383,8 @@ class TwitchPS extends EventEmitter {
    *                      channel_name - {string} - Channel name
    *                      viewers - {integer} - Number of viewers currently watching
    */
-  _onVideoPlayback(message, channel){
-    if(message.data.message.type === 'stream-up') {
+  _onVideoPlayback(message, channel) {
+    if (message.data.message.type === 'stream-up') {
       this.emit('stream-up', {
         time: message.data.message.server_time,
         channel_name: channel,
@@ -430,7 +438,7 @@ class TwitchPS extends EventEmitter {
    *                      created_by_user_id - {string} - The user ID of who cleared the chat
    */
   _onModeratorAction(message) {
-    switch(message.data.message.data.moderation_action) {
+    switch (message.data.message.data.moderation_action) {
       case 'ban':
         this.emit('ban', {
           target: message.data.message.data.args[0],
@@ -479,7 +487,7 @@ class TwitchPS extends EventEmitter {
    * @param {string} origin - Name of what callback function error originates from
    * @param {string} error - Error message to emit
    */
-  _handleError(orig, error){
+  _handleError(orig, error) {
     let err_mess = 'Error found - ' + orig + ' - ';
     console.error(err_mess, error);
   }
@@ -489,10 +497,10 @@ class TwitchPS extends EventEmitter {
    * @param {string} origin - Name of what callback function error originates from
    * @param {string} mess - Status message to emit
    */
-  _sendDebug(origin, mess){
-    if(this._debug) {
+  _sendDebug(origin, mess) {
+    if (this._debug) {
       let d = new Date();
-      console.log('TwitchPS -- ' + d.toLocaleString() + ' -- in ' + origin + ' -- ',  mess);
+      console.log('TwitchPS -- ' + d.toLocaleString() + ' -- in ' + origin + ' -- ', mess);
     }
   }
 
@@ -502,8 +510,8 @@ class TwitchPS extends EventEmitter {
   _wait(callback) {
     setTimeout(() => {
       if (this._ws.readyState === 1) {
-        this._sendDebug('_wait()','Connected');
-        if(callback != null) {
+        this._sendDebug('_wait()', 'Connected');
+        if (callback != null) {
           callback();
         }
         return;
@@ -525,12 +533,12 @@ class TwitchPS extends EventEmitter {
    * @param {string} [token=Default Token] topics[].token - Authentication token
    * @param {Boolean} init - Boolean for if first topics to listen
    */
-  addTopic(topics, init = false){
+  addTopic(topics, init = false) {
 
     return new Promise((resolve, reject) => {
 
       this._wait(() => {
-        for(let i = 0; i < topics.length; i += 1) {
+        for (let i = 0; i < topics.length; i += 1) {
           let top = topics[i].topic;
           let tok = topics[i].token;
           let nonce = shortid.generate();
@@ -559,7 +567,7 @@ class TwitchPS extends EventEmitter {
             }
           }));
           setTimeout(() => {
-            if(this._pending[nonce]) {
+            if (this._pending[nonce]) {
               this._pending[nonce].reject('timeout');
             }
           }, 10000);
@@ -575,10 +583,10 @@ class TwitchPS extends EventEmitter {
    * @param {string} topics.topic - Topic to unlisten
    *
    */
-  removeTopic(topics){
+  removeTopic(topics) {
     return new Promise((resolve, reject) => {
       this._wait(() => {
-        for(let i = 0; i < topics.length; i += 1) {
+        for (let i = 0; i < topics.length; i += 1) {
           let top = topics[i].topic;
           let nonce = shortid.generate();
 
