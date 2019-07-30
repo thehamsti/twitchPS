@@ -108,6 +108,7 @@ class TwitchPS extends EventEmitter {
             channel = split[1];
           switch (message.data.topic.substr(0, message.data.topic.indexOf('.'))) {
             case 'channel-bits-events-v1':
+            case 'channel-bits-events-v2':
               self._onBits(message);
               break;
             case 'channel-subscribe-events-v1':
@@ -206,18 +207,20 @@ class TwitchPS extends EventEmitter {
   _onBits(message) {
     // TODO ADD VERSION CHECK/EMIT
     this.emit('bits', {
+      "badge_entitlement": message.data.message.data.badge_entitlement, // v2 only
       "bits_used": message.data.message.data.bits_used,
       "channel_id": message.data.message.data.channel_id,
       "channel_name": message.data.message.data.channel_name,
       "chat_message": message.data.message.data.chat_message,
       "context": message.data.message.data.context,
-      "message_id": message.data.message.data.message_id,
-      "message_type": message.data.message.data.message_type,
+      "is_anonymous": message.data.message.data.is_anonymous, // v2 only
+      "message_id": message.data.message.message_id,
+      "message_type": message.data.message.message_type,
       "time": message.data.message.data.time,
       "total_bits_used": message.data.message.data.total_bits_used,
       "user_id": message.data.message.data.user_id,
       "user_name": message.data.message.data.user_name,
-      "version": message.data.message.data.version
+      "version": message.data.message.version
     });
 
   }
