@@ -260,8 +260,9 @@ class TwitchPS extends EventEmitter {
       "time": message.data.message.time,
       "sub_plan": message.data.message.sub_plan,
       "sub_plan_name": message.data.message.sub_plan_name,
-      "months": message.data.message.months,
-      "cumulative_months": message.data.message.cumulative_months,
+      "months": message.data.message.months, // Depecrecated, but still used by gift subs
+      "cumulative_months": message.data.message['cumulative-months'],
+      "streak_months": message.data.message['streak-months'],
       "context": message.data.message.context,
       "sub_message": {
         "message": message.data.message.sub_message.message,
