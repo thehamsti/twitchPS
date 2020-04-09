@@ -111,6 +111,12 @@ class TwitchPS extends EventEmitter {
             case 'channel-bits-events-v2':
               self._onBits(message);
               break;
+            case 'channel-bits-badge-unlocks':
+              self._onBitsBadgeUnlocks(message);
+              break;
+            case 'channel-points-channel-v1':
+              self._onChannelPoints(message);
+              break;
             case 'channel-subscribe-events-v1':
               self._onSub(message);
               break;
@@ -226,13 +232,71 @@ class TwitchPS extends EventEmitter {
   }
 
   /**
+   * Handles Bits Badge Notification Message
+   * @param message - {object} - Message object received from pubsub-edge
+   * @param message.type - {string} - Type of message - Will always be 'MESSAGE' - Handled by _connect()
+   * @param message.data - {JSON} - JSON wrapper of topic/message fields
+   * @param message.data.topic - {string} - Topic that message pertains too - Will always be 'channel-bits-badge-unlocks.<CHANNEL_ID>' - Handled by _connect()
+   * @param message.data.message - {JSON} - Parsed into JSON in _connect() - Originally received as string from Twitch
+   * @emits bits-badge - {event} -
+   *         JSON object -
+   *                     user_id - {string} - ID of user who earned the new Bits badge
+   *                     user_name - {string} - Login of user who earned the new Bits badge
+   *                     channel_id - {string} - ID of channel where user earned the new Bits badge
+   *                     channel_name - {string} - Login of channel where user earned the new Bits badge
+   *                     badge_tier - {int} - Value of Bits badge tier that was earned (1000, 10000, etc.)
+   *                     chat_message - {string} - [Optional] Custom message included with share
+   *                     time - {string} - Time when the bits were used. RFC 3339 format
+   */
+  _onBitsBadgeUnlocks(message) {
+    this.emit('bits-badge', {
+      "user_id": message.data.message.data.user_id,
+      "user_name": message.data.message.data.user_name,
+      "channel_id": message.data.message.data.channel_id,
+      "channel_name": message.data.message.data.channel_name,
+      "chat_message": message.data.message.data.chat_message,
+      "badge_tier": message.data.message.data.badge_tier,
+      "time": message.data.message.data.time
+    });
+  }
+
+  /**
+   * Handles Channel Points Event Message
+   * @param message - {object} - Message object received from pubsub-edge
+   * @param message.type - {string} - Type of message - Will always be 'MESSAGE' - Handled by _connect()
+   * @param message.data - {JSON} - JSON wrapper of topic/message fields
+   * @param message.data.topic - {string} - Topic that message pertains too - Will always be 'channel-points-channel-v1.<CHANNEL_ID>' - Handled by _connect()
+   * @param message.data.message - {JSON} - Parsed into JSON in _connect() - Originally received as string from Twitch
+   * @emits channel-points - {event} -
+   *         JSON object -
+   *                     timestamp - {string} - Time the pubsub message was sent
+   *                     redemption - {object} - Data about the redemption, includes unique id and user that redeemed it
+   *                     channel_id - {string} - ID of the channel in which the reward was redeemed.
+   *                     redeemed_at - {string} - Timestamp in which a reward was redeemed
+   *                     reward - {object} - Data about the reward that was redeemed
+   *                     user_input - {string} - [Optional] A string that the user entered if the reward requires input
+   *                     status - {string} - reward redemption status, will be FULFULLED if a user skips the reward queue, UNFULFILLED otherwise
+   */
+  _onChannelPoints(message) {
+    this.emit('channel-points', {
+      "timestamp": message.data.message.data.timestamp,
+      "redemption": message.data.message.data.redemption,
+      "channel_id": message.data.message.data.channel_id,
+      "redeemed_at": message.data.message.data.redeemed_at,
+      "reward": message.data.message.data.reward,
+      "user_input": message.data.message.data.user_input,
+      "status": message.data.message.data.status
+    });
+  }
+
+  /**
    * Handles Subscription Message
    * @param message - {object} - Message object received from pubsub-edge
    * @param message.type - {string} - Type of message - Will always be 'MESSAGE' - Handled by _connect()
    * @param message.data - {JSON} - JSON wrapper of topic/message fields
    * @param message.data.topic - {string} - Topic that message pertains too - Will always be 'channel-subscribe-events-v1.<CHANNEL_ID>' - Handled by _connect()
    * @param message.data.message - {JSON} - Parsed into JSON in _connect() - Originally received as string from Twitch
-   * @emits bits - {event} -
+   * @emits subscribe - {event} -
    *         JSON object -
    *                     user_name - {string} - Username of subscriber
    *                     display_name - {string} - Display name of subscriber
@@ -250,7 +314,6 @@ class TwitchPS extends EventEmitter {
    *                     sub_message.emotes - {array} - Array of emotes
    */
   _onSub(message) {
-    // TODO ADD VERSION CHECK/EMIT
     this.emit('subscribe', {
       "user_name": message.data.message.user_name,
       "display_name": message.data.message.display_name,
@@ -272,7 +335,6 @@ class TwitchPS extends EventEmitter {
       "recipient_user_name": message.data.message.recipient_user_name,
       "recipient_display_name": message.data.message.recipient_display_name
     });
-
   }
 
   /**
@@ -522,7 +584,7 @@ class TwitchPS extends EventEmitter {
       }
       this._sendDebug('_wait()', 'Waiting for connection');
       this._wait(callback);
-    }, 5);
+    }, 500);
   }
   /***** End Helper Functions *****/
 
@@ -538,9 +600,7 @@ class TwitchPS extends EventEmitter {
    * @param {Boolean} init - Boolean for if first topics to listen
    */
   addTopic(topics, init = false) {
-
-    return new Promise((resolve, reject) => {
-
+    return new Promise((res, rej) => {
       this._wait(() => {
         for (let i = 0; i < topics.length; i += 1) {
           let top = topics[i].topic;
@@ -553,13 +613,14 @@ class TwitchPS extends EventEmitter {
           this._pending[nonce] = {
             resolve: () => {
               this._topics.push(top);
+              this._sendDebug('addTopic()', `Topic added successfully: ${top}`);
               delete this._pending[nonce];
-              resolve();
+              return res();
             },
             reject: (err) => {
-              reject(err);
-              this._handleError('Rejected addTopic() promise', err);
+              this._handleError('addTopic()', `Topic not added: ${err}`);
               delete this._pending[nonce];
+              return rej(err);
             }
           };
           this._ws.send(JSON.stringify({
@@ -601,12 +662,11 @@ class TwitchPS extends EventEmitter {
               };
               topics.map(removeTopic);
               delete this._pending[nonce];
-              resolve();
+              return resolve();
             },
             reject: (err) => {
-              reject(err);
-              this._handleError('Rejected removeTopic() promise', err);
               delete this._pending[nonce];
+              return reject(err);
             }
           };
           this._ws.send(JSON.stringify({
