@@ -528,7 +528,76 @@ class TwitchPS extends EventEmitter {
           target_user_id: message.data.message.data.target_user_id,
           created_by: message.data.message.data.created_by,
           created_by_user_id: message.data.message.data.created_by_user_id,
-          duration: message.data.message.data.args[1],
+          duration: message.data.message.data.args[1], // in seconds
+          reason: message.data.message.data.args[2] || null,
+        });
+        break;
+      case 'unhost':
+        this.emit('unhost', {
+          created_by: message.data.message.data.created_by,
+          created_by_user_id: message.data.message.data.created_by_user_id,
+        });
+        break;
+      case 'emoteonly':
+        this.emit('emoteonly', {
+          created_by: message.data.message.data.created_by,
+          created_by_user_id: message.data.message.data.created_by_user_id,
+        });
+        break;
+      case 'emoteonlyoff':
+        this.emit('emoteonlyoff', {
+          created_by: message.data.message.data.created_by,
+          created_by_user_id: message.data.message.data.created_by_user_id,
+        });
+        break;
+      case 'followers':
+        this.emit('followers', {
+          length: message.data.message.data.args[0], // in minutes
+          created_by: message.data.message.data.created_by,
+          created_by_user_id: message.data.message.data.created_by_user_id,
+        });
+        break;
+      case 'followersoff':
+        this.emit('followersoff', {
+          created_by: message.data.message.data.created_by,
+          created_by_user_id: message.data.message.data.created_by_user_id,
+        });
+        break;
+      case 'subscribers':
+        this.emit('subscribers', {
+          created_by: message.data.message.data.created_by,
+          created_by_user_id: message.data.message.data.created_by_user_id,
+        });
+        break;
+      case 'subscribersoff':
+        this.emit('subscribersoff', {
+          created_by: message.data.message.data.created_by,
+          created_by_user_id: message.data.message.data.created_by_user_id,
+        });
+        break;
+      case 'r9kbeta':
+        this.emit('r9kbeta', {
+          created_by: message.data.message.data.created_by,
+          created_by_user_id: message.data.message.data.created_by_user_id,
+        });
+        break;
+      case 'r9kbetaoff':
+        this.emit('r9kbetaoff', {
+          created_by: message.data.message.data.created_by,
+          created_by_user_id: message.data.message.data.created_by_user_id,
+        });
+        break;
+      case 'slow':
+        this.emit('slow', {
+          length: message.data.message.data.args[0], // in seconds
+          created_by: message.data.message.data.created_by,
+          created_by_user_id: message.data.message.data.created_by_user_id,
+        });
+        break;
+      case 'slowoff':
+        this.emit('slowoff', {
+          created_by: message.data.message.data.created_by,
+          created_by_user_id: message.data.message.data.created_by_user_id,
         });
         break;
       case 'clear':
