@@ -9,7 +9,7 @@ Neat little [Node](http://nodejs.org) library which lets you easily interact wit
 
 |  Feature | Topic and Example | Required Scope  |  You are notified when …         |  
 |---|---|---|---|
-| Bits  | ```channel-bits-events-v1.<channel ID>``` <br><br> ```channel-bits-events-v2.<channel ID>``` <br><br> Example: ```hannel-bits-events-v1.44322889```| ```bits:read```  | Anyone cheers on a specified channel.  |
+| Bits  | ```channel-bits-events-v1.<channel ID>``` <br><br> ```channel-bits-events-v2.<channel ID>``` <br><br> Example: ```channel-bits-events-v1.44322889```| ```bits:read```  | Anyone cheers on a specified channel.  |
 | Bits Badge Notification  | ```channel-bits-badge-unlocks.<channel_id>``` <br><br> Example: ```channel-bits-badge-unlocks.44322889```| ```bits:read``` | Message sent when a user earns a new Bits badge in a particular channel, and chooses to share the notification with chat. |
 | Channel Points | ```channel-points-channel-v1.<channel_id>```<br><br> Example: ```channel-points-channel-v1.44322889```| ```channel:read:redemptions``` | A custom reward is redeemed in a channel. |
 | Channel Subscriptions  | ```channel-subscribe-events-v1.<channel ID>``` <br><br> Example: ```channel-subscribe-events-v1.44322889```| ```channel_subscriptions```  | Anyone subscribes (first month, gift sub) or resubscribes (subsequent months) to a channel.  |
