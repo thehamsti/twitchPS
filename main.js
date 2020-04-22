@@ -316,6 +316,7 @@ class TwitchPS extends EventEmitter {
   _onSub(message) {
     this.emit('subscribe', {
       "user_name": message.data.message.user_name,
+      "benefit_end_month": message.data.message.benefit_end_month,
       "display_name": message.data.message.display_name,
       "channel_name": message.data.message.channel_name,
       "user_id": message.data.message.user_id,
@@ -324,8 +325,8 @@ class TwitchPS extends EventEmitter {
       "sub_plan": message.data.message.sub_plan,
       "sub_plan_name": message.data.message.sub_plan_name,
       "months": message.data.message.months, // Depecrecated, but still used by gift subs
-      "cumulative_months": message.data.message['cumulative-months'],
-      "streak_months": message.data.message['streak-months'],
+      "cumulative_months": message.data.message.cumulative_months,
+      "streak_months": message.data.message.streak_months,
       "context": message.data.message.context,
       "sub_message": {
         "message": message.data.message.sub_message.message,
