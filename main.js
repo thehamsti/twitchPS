@@ -281,11 +281,11 @@ class TwitchPS extends EventEmitter {
     this.emit('channel-points', {
       "timestamp": message.data.message.data.timestamp,
       "redemption": message.data.message.data.redemption,
-      "channel_id": message.data.message.data.channel_id,
-      "redeemed_at": message.data.message.data.redeemed_at,
-      "reward": message.data.message.data.reward,
-      "user_input": message.data.message.data.user_input,
-      "status": message.data.message.data.status
+      "channel_id": message.data.message.data.redemption.channel_id,
+      "redeemed_at": message.data.message.data.redemption.redeemed_at,
+      "reward": message.data.message.data.redemption.reward,
+      "user_input": message.data.message.data.redemption.user_input,
+      "status": message.data.message.data.redemption.status
     });
   }
 
