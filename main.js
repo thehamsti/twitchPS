@@ -623,9 +623,11 @@ class TwitchPS extends EventEmitter {
    * @param {string} origin - Name of what callback function error originates from
    * @param {string} error - Error message to emit
    */
-  _handleError(orig, error) {
-    let err_mess = 'Error found - ' + orig + ' - ';
-    console.error(err_mess, error);
+  _handleError(origin, error) {
+    this.emit('error', {
+      origin,
+      error,
+    });
   }
 
   /**
