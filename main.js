@@ -623,10 +623,11 @@ class TwitchPS extends EventEmitter {
    * @param {string} origin - Name of what callback function error originates from
    * @param {string} error - Error message to emit
    */
-  _handleError(origin, error) {
+  _handleError(origin, error, top = null) {
     this.emit('error', {
       origin,
       error,
+      topicNotAdded: top,
     });
   }
 
@@ -690,7 +691,7 @@ class TwitchPS extends EventEmitter {
               return res();
             },
             reject: (err) => {
-              this._handleError('addTopic()', `${top} Topic not added: ${err}`);
+              this._handleError('addTopic()', `Topic not added: ${err}`, top);
               delete this._pending[nonce];
               return rej(err);
             }
