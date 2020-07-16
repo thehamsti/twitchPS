@@ -690,6 +690,7 @@ class TwitchPS extends EventEmitter {
               return res();
             },
             reject: (err) => {
+              console.log(this._pending[nonce]);
               this._handleError('addTopic()', `Topic not added: ${err}`);
               delete this._pending[nonce];
               return rej(err);
