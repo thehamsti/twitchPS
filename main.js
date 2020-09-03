@@ -607,6 +607,61 @@ class TwitchPS extends EventEmitter {
           created_by_user_id: message.data.message.data.created_by_user_id,
         });
         break;
+      case 'automod_rejected': 
+        this.emit('automod_rejected', {
+          user: message.data.message.data.target_user_login,
+          user_id: message.data.message.data.target_user_id,
+          message_id: message.data.message.data.msg_id,
+          message: message.data.message.data.args[1],
+          reason: message.data.message.data.args[2],
+        });
+        break;
+      case 'approved_automod_message': 
+        this.emit('approved_automod_message', {
+          created_by: message.data.message.data.created_by,
+          created_by_user_id: message.data.message.data.created_by_user_id,
+          message_id: message.data.message.data.msg_id,
+          target_user_login: message.data.message.target_user_login,
+          target_user_id: message.data.message.data.target_user_id,
+        });
+        break;
+      case 'denied_automod_message': 
+        this.emit('denied_automod_message', {
+          created_by: message.data.message.data.created_by,
+          created_by_user_id: message.data.message.data.created_by_user_id,
+          message_id: message.data.message.data.msg_id,
+          target_user_login: message.data.message.data.target_user_login,
+          target_user_id: message.data.message.data.target_user_id,
+        });
+        break;
+      case 'add_permitted_term': 
+        this.emit('add_permitted_term', {
+          created_by: message.data.message.data.created_by,
+          created_by_user_id: message.data.message.data.created_by_user_id,
+          approved_term: message.data.message.data.args[0],
+        });
+        break;
+      case 'delete_permitted_term': 
+        this.emit('delete_permitted_term', {
+          created_by: message.data.message.data.created_by,
+          created_by_user_id: message.data.message.data.created_by_user_id,
+          deleted_term: message.data.message.data.args[0],
+        });
+        break;
+      case 'add_blocked_term': 
+        this.emit('add_blocked_term', {
+          created_by: message.data.message.data.created_by,
+          created_by_user_id: message.data.message.data.created_by_user_id,
+          approved_term: message.data.message.data.args[0],
+        });
+        break;
+      case 'delete_blocked_term': 
+        this.emit('delete_blocked_term', {
+          created_by: message.data.message.data.created_by,
+          created_by_user_id: message.data.message.data.created_by_user_id,
+          blocked_term: message.data.message.data.args[0],
+        });
+        break;
       default:
         // Do Nothing
     }
