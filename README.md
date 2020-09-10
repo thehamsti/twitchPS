@@ -78,6 +78,14 @@ ps.on('stream-up', (data) => {
 | 'stream-up' | time - {integer} <br>channel_name- {string}<br> play_delay - {string} |
 | 'stream-down' | time - {integer} <br>channel_name- {string} |
 | 'viewcount' | time - {integer}<br> channel_name- {string} <br>viewers - {integer} |
+| 'automod_rejected' | user - {string}<br> user_id - {string} <br>message_id - {string}<br>message - {string} <br> reason - {string} |
+| 'approved_automod_message' | createdBy - {string}<br> created_by_user_id - {string} <br>message_id - {string}<br>target_user_login - {string} <br> target_user_id - {string} |
+| 'denied_automod_message' | createdBy - {string}<br> created_by_user_id - {string} <br>message_id - {string}<br>target_user_login - {string} <br> target_user_id - {string} |
+| 'add_permitted_term' | createdBy - {string}<br> created_by_user_id - {string} <br>approved_term - {string} |
+| 'delete_permitted_term' | createdBy - {string}<br> created_by_user_id - {string} <br>deleted_term - {string} |
+| 'add_blocked_term' | createdBy - {string}<br> created_by_user_id - {string} <br>approved_term - {string} |
+| 'add_permitted_term' | createdBy - {string}<br> created_by_user_id - {string} <br>blocked_term - {string} |
+
 
 #### Listen to new topics
 
