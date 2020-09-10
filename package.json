@@ -1,6 +1,6 @@
 {
   "name": "twitchps",
-  "version": "1.5.4",
+  "version": "1.5.5",
   "description": "Library to easily interact with Twitch PubSub System",
   "keywords": [
     "twitch",
