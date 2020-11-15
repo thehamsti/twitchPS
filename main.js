@@ -117,6 +117,9 @@ class TwitchPS extends EventEmitter {
             case 'channel-points-channel-v1':
               self._onChannelPoints(message);
               break;
+            case 'community-points-channel-v1':
+              self._onCommunityPoints(message);
+              break;
             case 'channel-subscribe-events-v1':
               self._onSub(message);
               break;
@@ -287,6 +290,114 @@ class TwitchPS extends EventEmitter {
       "user_input": message.data.message.data.redemption.user_input,
       "status": message.data.message.data.redemption.status
     });
+  }
+
+  /**
+   * Handles Community Channel Points Event Message
+   * @param message - {object} - Message object received from pubsub-edge
+   * @param message.type - {string} - Type of message - Will always be 'MESSAGE' - Handled by _connect()
+   * @param message.data - {JSON} - JSON wrapper of topic/message fields
+   * @param message.data.topic - {string} - Topic that message pertains too - Will always be 'community-points-channel-v1.<CHANNEL_ID>' - Handled by _connect()
+   * @param message.data.message - {JSON} - Parsed into JSON in _connect() - Originally received as string from Twitch
+   * @emits community-points-all, community-custom-reward-created, community-custom-reward-updated
+   * community-custom-reward-deleted, community-goal-created, community-goal-updated,
+   * community-goal-deleted, channel-points
+   *          community-points-all
+   *            JSON object - 
+   *                        type - {string} - Type of the event
+   *                        timestamp - {string} - Time the pubsub message was sent
+   *                        event - {object} - All data from all points events
+   *          community-reward-created
+   *            JSON object - 
+   *                        timestamp - {string} - Time the pubsub message was sent
+   *                        event - {object} - All data from the event
+   *          community-reward-updated
+   *            JSON object - 
+   *                        timestamp - {string} - Time the pubsub message was sent
+   *                        event - {object} - All data from the event
+   *          community-reward-deleted
+   *            JSON object - 
+   *                        timestamp - {string} - Time the pubsub message was sent
+   *                        event - {object} - All data from the event
+   *          community-goal-created
+   *            JSON object - 
+   *                        timestamp - {string} - Time the pubsub message was sent
+   *                        event - {object} - All data from the event
+   *          community-goal-updated
+   *            JSON object - 
+   *                        timestamp - {string} - Time the pubsub message was sent
+   *                        event - {object} - All data from the event
+   *          community-goal-deleted
+   *            JSON object -
+   *                        timestamp - {string} - Time the pubsub message was sent
+   *                        event - {object} - All data from the event
+   *          channel-points
+   *            JSON object - 
+   *                        timestamp - {string} - Time the pubsub message was sent
+   *                        redemption - {object} - Data about the redemption, includes unique id and user that redeemed it
+   *                        channel_id - {string} - ID of the channel in which the reward was redeemed.
+   *                        redeemed_at - {string} - Timestamp in which a reward was redeemed
+   *                        reward - {object} - Data about the reward that was redeemed
+   *                        user_input - {string} - [Optional] A string that the user entered if the reward requires input
+   *                        status - {string} - reward redemption status, will be FULFULLED if a user skips the reward queue, UNFULFILLED otherwise  
+   */
+  _onCommunityPoints(message) {
+    this.emit('community-points-all', {
+      "type": message.data.message.type,
+      "timestamp": message.data.message.data.timestamp,
+      "event": message.data.message.data[`${Object.keys(message.data.message.data)[1]}`]
+    });
+    switch(message.data.message.type){
+      case "custom-reward-created":
+        this.emit('community-reward-created', {
+          "timestamp": message.data.message.data.timestamp,
+          "event": message.data.message.data.new_reward
+        });
+        break;
+      case "custom-reward-updated":
+        this.emit('community-reward-updated', {
+          "timestamp": message.data.message.data.timestamp,
+          "event": message.data.message.data.updated_reward
+        });
+        break;
+      case "custom-reward-deleted":
+        this.emit('community-reward-deleted', {
+          "timestamp": message.data.message.data.timestamp,
+          "event": message.data.message.data.deleted_reward
+        });
+        break;
+      case "community-goal-created":
+        this.emit('community-goal-created', {
+          "timestamp": message.data.message.data.timestamp,
+          "event": message.data.message.data.community_goal
+        });
+        break;
+      case "community-goal-updated":
+        this.emit('community-goal-updated', {
+          "timestamp": message.data.message.data.timestamp,
+          "event": message.data.message.data.community_goal
+        });
+        break;
+      case "community-goal-deleted":
+        this.emit('community-goal-deleted', {
+          "timestamp": message.data.message.data.timestamp,
+          "event": message.data.message.data.community_goal
+        });
+        break;
+      case "reward-redeemed":
+        this.emit('channel-points', {
+          "timestamp": message.data.message.data.timestamp,
+          "redemption": message.data.message.data.redemption,
+          "channel_id": message.data.message.data.redemption.channel_id,
+          "redeemed_at": message.data.message.data.redemption.redeemed_at,
+          "reward": message.data.message.data.redemption.reward,
+          "user_input": message.data.message.data.redemption.user_input,
+          "status": message.data.message.data.redemption.status
+        });
+        break;
+      default:
+        // Do Nothing
+    }
   }
 
   /**
