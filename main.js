@@ -348,6 +348,17 @@ class TwitchPS extends EventEmitter {
       "event": message.data.message.data[`${Object.keys(message.data.message.data)[1]}`]
     });
     switch(message.data.message.type){
+      case "reward-redeemed":
+        this.emit('reward-redeemed', {
+          "timestamp": message.data.message.data.timestamp,
+          "redemption": message.data.message.data.redemption,
+          "channel_id": message.data.message.data.redemption.channel_id,
+          "redeemed_at": message.data.message.data.redemption.redeemed_at,
+          "reward": message.data.message.data.redemption.reward,
+          "user_input": message.data.message.data.redemption.user_input,
+          "status": message.data.message.data.redemption.status
+        });
+        break;
       case "custom-reward-created":
         this.emit('community-reward-created', {
           "timestamp": message.data.message.data.timestamp,
@@ -382,17 +393,6 @@ class TwitchPS extends EventEmitter {
         this.emit('community-goal-deleted', {
           "timestamp": message.data.message.data.timestamp,
           "event": message.data.message.data.community_goal
-        });
-        break;
-      case "reward-redeemed":
-        this.emit('channel-points', {
-          "timestamp": message.data.message.data.timestamp,
-          "redemption": message.data.message.data.redemption,
-          "channel_id": message.data.message.data.redemption.channel_id,
-          "redeemed_at": message.data.message.data.redemption.redeemed_at,
-          "reward": message.data.message.data.redemption.reward,
-          "user_input": message.data.message.data.redemption.user_input,
-          "status": message.data.message.data.redemption.status
         });
         break;
       default:
