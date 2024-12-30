@@ -112,6 +112,6 @@ ps.removeTopic([{topic: "video-playback.starladder_cs_en"}]);
 
 ## Community
 
-- Follow [@thecuriouseng](https://twitter.com/thecuriouseng) on Twitter
+- Follow [@thehamsti](https://x.com/thehamsti) on X
 - Have a question that is not a bug report? - Tweet me [@thecuriouseng](https://twitter.com/thecuriouseng)
 - Found a bug ? [Submit an issue](https://github.com/jctrvlr/twitchps/issues/new).
