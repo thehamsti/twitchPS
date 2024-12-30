@@ -1,7 +1,7 @@
-# [TwitchPS](https://github.com/jctrvlr/twitchps)
+# [TwitchPS](https://github.com/thehamsti/twitchps)
 
- [![dependency status](https://david-dm.org/jctrvlr/twitchps.svg)](https://david-dm.org/jctrvlr/twitchps)
- [![Downloads](https://img.shields.io/npm/dm/twitchps.svg?style=flat)](https://www.npmjs.org/package/twitchps) [![Version](https://img.shields.io/npm/v/twitchps.svg?style=flat)](https://www.npmjs.org/package/twitchps)  [![GitHub issues](https://img.shields.io/github/issues/jctrvlr/twitchPS.svg)](https://github.com/jctrvlr/twitchPS/issues) [![Build Status](https://travis-ci.org/jctrvlr/twitchPS.svg?branch=master)](https://travis-ci.org/jctrvlr/twitchPS)
+ [![dependency status](https://david-dm.org/thehamsti/twitchps.svg)](https://david-dm.org/thehamsti/twitchps)
+ [![Downloads](https://img.shields.io/npm/dm/twitchps.svg?style=flat)](https://www.npmjs.org/package/twitchps) [![Version](https://img.shields.io/npm/v/twitchps.svg?style=flat)](https://www.npmjs.org/package/twitchps)  [![GitHub issues](https://img.shields.io/github/issues/thehamsti/twitchPS.svg)](https://github.com/thehamsti/twitchPS/issues) [![Build Status](https://travis-ci.org/thehamsti/twitchPS.svg?branch=master)](https://travis-ci.org/thehamsti/twitchPS)
  
  ## NO LONGER MAINTAINED. 
 
